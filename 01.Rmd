@@ -49,7 +49,7 @@ y <- unlist(lapply(datos_unif, '[[', 2))
 Para el dibujo de la gráfica usamos la función `plot`:
 
 ```{r plot_unif}
-plot(x, y, col = 'red', pch = 20)
+plot(x, y, col = 'red', pch = 20, asp=1)
 ```
 
 ## Ejercicio 4
@@ -121,7 +121,7 @@ datos <- data.frame(X = x, Y = y, Etiqueta = etiquetado1(x,y))
 Por último, generamos la gráfica con `plot`, asignando un color diferente según el etiquetado, y añadiendo la gráfica de la recta simulada:
 
 ```{r plot}
-colores <- ifelse(datos$Etiqueta == 1, "blue", "red")
+colores <- ifelse(datos$Etiqueta == 1, "green", "red")
 
 plot(datos$X, datos$Y, xlim = range(datos$X), ylim = range(datos$Y), asp = 1, col = colores, pch = 20)
 abline(rev(recta))
@@ -148,14 +148,14 @@ f5 <- function(x,y){
 }
 ```
 
-```{r asdjalsdalsdjalsdjlakjdslajsdlkasdjsd}
-genera_grafico <- function(dat.x, dat.y, f){
+```{r genera_grafico}
+genera_grafico <- function(dat.x, dat.y, f, ...){
     etiquetado <- generador_etiquetados(f)
     etiquetas <- etiquetado(dat.x, dat.y)
     
-    colores <- ifelse(etiquetas == 1, "blue", "red")
+    colores <- ifelse(etiquetas == 1, "green", "red")
 
-    plot(dat.x, dat.y, asp = 1, col = colores, pch = 20)
+    plot(dat.x, dat.y, asp = 1, col = colores, pch = 20, ...)
     
     f.x <- seq(-50, 50, length=1000)
     f.y <- seq(-50, 50, length=1000)
@@ -163,14 +163,78 @@ genera_grafico <- function(dat.x, dat.y, f){
     contour(f.x, f.y, f.z, levels=0, col = "blue", add=T, drawlabels=F)
 }
 
-genera_grafico(x, y, f2)
-genera_grafico(x, y, f3)
-genera_grafico(x, y, f4)
-genera_grafico(x, y, f5)
+par(mfrow=c(2, 2))
+
+genera_grafico(x, y, f2, cex=0.25)
+genera_grafico(x, y, f3, cex=0.25)
+genera_grafico(x, y, f4, cex=0.25)
+genera_grafico(x, y, f5, cex=0.25)
+
+par(mfrow=c(1, 1))
 ```
 
+## Ejercicio 8
 
+```{r cambio_etiquetas}
+# Get indices of the labelled data, divided into positive and negative
+indices_pos <- which(datos$Etiqueta %in% 1)
+indices_neg <- which(datos$Etiqueta %in% -1)
 
+# Get a random sample of those indices, of size 10%
+cambiar_pos <- sample(indices_pos, round(0.1*length(indices_pos)))
+cambiar_neg <- sample(indices_neg, round(0.1*length(indices_neg)))
+
+# Change those positions
+datos$Etiqueta[cambiar_pos] <- -1
+datos$Etiqueta[cambiar_neg] <- 1
+```
+
+```{r redibujado}
+colores <- ifelse(datos$Etiqueta == 1, "green", "red")
+
+plot(datos$X, datos$Y, xlim = range(datos$X), ylim = range(datos$Y), asp = 1, col = colores, pch = 20)
+abline(rev(recta), col="blue")
+```
+
+```{r redibujado_otras}
+genera_grafico <- function(dat.x, dat.y, f, generarRuido = F, ...){
+    etiquetado <- generador_etiquetados(f)
+    etiquetas <- etiquetado(dat.x, dat.y)
+    
+    if(generarRuido){
+        # Get indices of the labelled data, divided into positive and negative
+        indices_pos <- which(etiquetas %in% 1)
+        indices_neg <- which(etiquetas %in% -1)
+        
+        # Get a random sample of those indices, of size 10%
+        cambiar_pos <- sample(indices_pos, round(0.1*length(indices_pos)))
+        cambiar_neg <- sample(indices_neg, round(0.1*length(indices_neg)))
+        
+        # Change those positions
+        etiquetas[cambiar_pos] <- -1
+        etiquetas[cambiar_neg] <- 1
+    }
+    
+    colores <- ifelse(etiquetas == 1, "green", "red")
+
+    plot(dat.x, dat.y, asp = 1, col = colores, pch = 20, ...)
+    
+    f.x <- seq(-50, 50, length=1000)
+    f.y <- seq(-50, 50, length=1000)
+    f.z <- outer(f.x, f.y, f)
+    contour(f.x, f.y, f.z, levels=0, col = "blue", add=T, drawlabels=F)
+}
+par(mfrow=c(2, 2))
+
+genera_grafico(x, y, f2, generarRuido = T, cex=0.25)
+genera_grafico(x, y, f3, generarRuido = T, cex=0.25)
+genera_grafico(x, y, f4, generarRuido = T, cex=0.25)
+genera_grafico(x, y, f5, generarRuido = T, cex=0.25)
+
+par(mfrow=c(1, 1))
+```
+
+# Ajuste del algoritmo Perceptron
 
 
 
