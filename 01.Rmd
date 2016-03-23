@@ -236,5 +236,62 @@ par(mfrow=c(1, 1))
 
 # Ajuste del algoritmo Perceptron
 
+## Ejercicio 1
+```{r PLA}
+ajusta_PLA <- function(datos, label, max_iter, vini){
+    w <- c(vini, 1)
+    changing <- T
+    iteraciones <- 0
+    
+    while(changing){
+        iteraciones <- iteraciones+1
+        
+        changing <- F
+        
+        for(index in seq(label)){
+            dato <- c(datos[index,], 1)
+            etiq <- label[index]
+            
+            if(sign(sum(w*dato)) != etiq) {
+                w <- w + etiq*dato
+                changing <- T
+            }
+        }
+    }
+    
+    # Return the Sol (a,b) that determine the line y = ax + b and the iterations
+    list(Sol = -c(w[1], w[3]) / w[2], Iter = iteraciones)
+}
+```
 
+## Ejercicio 2
+
+
+```{r primera_prueba_PLA}
+datos.matriz <- matrix(c(x,y), ncol = 2)
+datos.etiqueta <- etiquetado1(x,y)
+
+out_PLA  <- ajusta_PLA(datos.matriz, datos.etiqueta, 10000000, c(0,0))
+solucion <- out_PLA$Sol
+iteraciones <- out_PLA$Iter
+
+print(iteraciones)
+
+colores <- ifelse(datos.etiqueta == 1, "green", "red")
+
+plot(datos.matriz, asp = 1, col = colores, pch = 20)
+abline(rev(solucion), col="blue")
+```
+
+```{r PLA_random}
+wrapper <- function(vector){
+    datos <- ajusta_PLA(datos.matriz, datos.etiqueta, 10000000, vector)
+    return(datos$Iter)
+}
+
+
+pruebita <- lapply(simula_unif(10, 2, c(0,1)), wrapper)
+media <- mean(unlist(pruebita))
+
+```
 
