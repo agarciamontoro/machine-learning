@@ -370,7 +370,7 @@ out_PLA  <- ajusta_PLA(datos.matriz, datos.etiqueta, 10000000, c(0,0))
 
 ```
 
-```{r repetir_apartado3}
+```{r repetir_apartado3, eval=FALSE}
 for (max_iter in c(10, 100, 1000)) {
     analisis_PLA(max_iter, datos$X, datos$Y, datos$Etiqueta)
 }
@@ -438,5 +438,31 @@ ajusta_PLA_MOD(datos.matriz, etiquetas_2, 1000, c(0,0))
 ajusta_PLA_MOD(datos.matriz, etiquetas_3, 1000, c(0,0))
 ajusta_PLA_MOD(datos.matriz, etiquetas_4, 1000, c(0,0))
 ajusta_PLA_MOD(datos.matriz, etiquetas_5, 1000, c(0,0))
+```
+
+# Regresión lineal
+
+## Ejercicio 2
+
+```{r}
+# Leemos el fichero
+digitos <- read.table("datos/zip.train")
+
+# Nos quedamos únicamente con los números 1 y 5
+digitos <- digitos[ is.element(digitos[,1], c(1,5)), ]
+```
+
+```{r imprimir_imagenes}
+prev_mar <- par()$mar
+
+par(mfrow = c(4, 4), "mar" = c(1,1,1,1))
+
+apply(digitos[1:16,], 1, function(digito) {
+    numero <- matrix(tail(digito, -1), nrow = 16)
+    numero <- numero[,ncol(numero):1]
+    image(numero, col = gray(seq(1,0,length=256)), axes = F, pty="s", asp=1)
+})
+
+par(mfrow=c(1, 1), "mar" = prev_mar)
 ```
 
