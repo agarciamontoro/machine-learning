@@ -161,14 +161,16 @@ genera_grafico <- function(dat.x, dat.y, f, ...){
     f.y <- seq(-50, 50, length=1000)
     f.z <- outer(f.x, f.y, f)
     contour(f.x, f.y, f.z, levels=0, col = "blue", add=T, drawlabels=F)
+    
+    return(etiquetas)
 }
 
 par(mfrow=c(2, 2))
 
-genera_grafico(x, y, f2, cex=0.25)
-genera_grafico(x, y, f3, cex=0.25)
-genera_grafico(x, y, f4, cex=0.25)
-genera_grafico(x, y, f5, cex=0.25)
+etiquetas_2 <- genera_grafico(x, y, f2, cex=0.25)
+etiquetas_3 <- genera_grafico(x, y, f3, cex=0.25)
+etiquetas_4 <- genera_grafico(x, y, f4, cex=0.25)
+etiquetas_5 <- genera_grafico(x, y, f5, cex=0.25)
 
 par(mfrow=c(1, 1))
 ```
@@ -223,13 +225,15 @@ genera_grafico <- function(dat.x, dat.y, f, generarRuido = F, ...){
     f.y <- seq(-50, 50, length=1000)
     f.z <- outer(f.x, f.y, f)
     contour(f.x, f.y, f.z, levels=0, col = "blue", add=T, drawlabels=F)
+    
+    return(etiquetas)
 }
 par(mfrow=c(2, 2))
 
-genera_grafico(x, y, f2, generarRuido = T, cex=0.25)
-genera_grafico(x, y, f3, generarRuido = T, cex=0.25)
-genera_grafico(x, y, f4, generarRuido = T, cex=0.25)
-genera_grafico(x, y, f5, generarRuido = T, cex=0.25)
+etiquetas_ruido_2 <- genera_grafico(x, y, f2, generarRuido = T, cex=0.25)
+etiquetas_ruido_3 <- genera_grafico(x, y, f3, generarRuido = T, cex=0.25)
+etiquetas_ruido_4 <- genera_grafico(x, y, f4, generarRuido = T, cex=0.25)
+etiquetas_ruido_5 <- genera_grafico(x, y, f5, generarRuido = T, cex=0.25)
 
 par(mfrow=c(1, 1))
 ```
@@ -243,7 +247,7 @@ ajusta_PLA <- function(datos, label, max_iter, vini){
     changing <- T
     iteraciones <- 0
     
-    while(changing){
+    while(changing && iteraciones < max_iter){
         iteraciones <- iteraciones+1
         
         changing <- F
@@ -290,8 +294,149 @@ wrapper <- function(vector){
 }
 
 
-pruebita <- lapply(simula_unif(10, 2, c(0,1)), wrapper)
-media <- mean(unlist(pruebita))
+inicio_aleatorio <- lapply(simula_unif(10, 2, c(0,1)), wrapper)
+media <- mean(unlist(inicio_aleatorio))
 
+```
+
+## Ejercicio 3
+```{r repetirPLA}
+
+analisis_PLA <- function(max_iter, dat.x, dat.y, dat.etiquetas){
+    datos.matriz <- matrix(c(dat.x, dat.y), ncol = 2)
+    
+    out_PLA <- ajusta_PLA(datos.matriz, dat.etiquetas, max_iter, c(0,0))
+    recta <- out_PLA$Sol
+
+    nuevo_etiquetado <- generador_etiquetados(function(x, y){ y - recta[1]*x - recta[2] })
+    nuevas_etiquetas <- nuevo_etiquetado(dat.x, dat.y)
+
+    mensaje <- paste("Número de etiquetas diferentes con", max_iter, "iteraciones:", sum(nuevas_etiquetas != dat.etiquetas))
+    print(mensaje)
+}
+
+for (max_iter in c(10, 100, 1000)) {
+    analisis_PLA(max_iter, datos$X, datos$Y, datos$Etiqueta)
+}
+
+```
+
+## Ejercicio 4
+```{r repetirPLA_8}
+for (max_iter in c(10, 100, 1000)) {
+    analisis_PLA(max_iter, x, y, etiquetas_ruido_2)
+}
+```
+
+## Ejercicio 5
+```{r modifica_PLA}
+ajusta_PLA <- function(datos, label, max_iter, vini, sleep){
+    w <- c(vini, 1)
+    changing <- T
+    iteraciones <- 0
+    
+    colores <- ifelse(label == 1, "green", "red")
+    
+    while(changing && iteraciones < max_iter){
+        iteraciones <- iteraciones+1
+        
+        changing <- F
+        
+        for(index in seq(label)){
+            dato <- c(datos[index,], 1)
+            etiq <- label[index]
+            
+            if(sign(sum(w*dato)) != etiq) {
+                w <- w + etiq*dato
+                changing <- T
+            }
+        }
+        
+        plot(datos, asp = 1, col = colores, pch = 20)
+        abline(-c(w[3], w[1]) / w[2], col="blue")
+        Sys.sleep(0.1)
+    }
+    
+    # Return the Sol (a,b) that determine the line y = ax + b and the iterations
+    list(Sol = -c(w[1], w[3]) / w[2], Iter = iteraciones)
+}
+```
+
+```{r prueba_nuevo_PLA}
+datos.matriz <- matrix(c(x,y), ncol = 2)
+datos.etiqueta <- etiquetado1(x,y)
+
+out_PLA  <- ajusta_PLA(datos.matriz, datos.etiqueta, 10000000, c(0,0))
+
+```
+
+```{r repetir_apartado3}
+for (max_iter in c(10, 100, 1000)) {
+    analisis_PLA(max_iter, datos$X, datos$Y, datos$Etiqueta)
+}
+
+```
+
+## Ejercicio 6
+
+Tratamos ahora de quedarnos con la mejor solución. Basta ir almacenando la recta que menor etiquetas erróneas tenga, de manera que tras el número máximo de iteraciones, si no se ha encontrado la óptima, devolvamos la más cercana.
+
+```{r PLA_MOD}
+ajusta_PLA_MOD <- function(datos, label, max_iter, vini, sleep){
+    w <- c(vini, 1)
+    changing <- T
+    iteraciones <- 0
+    
+    colores <- ifelse(label == 1, "green", "red")
+    
+    # Inicializamos el número de errores al total de datos recibidos
+    mejor_error <- length(datos[,1])
+    
+    while(changing && iteraciones < max_iter){
+        iteraciones <- iteraciones+1
+        
+        changing <- F
+        
+        for(index in seq(label)){
+            dato <- c(datos[index,], 1)
+            etiq <- label[index]
+            
+            if(sign(sum(w*dato)) != etiq) {
+                w <- w + etiq*dato
+                changing <- T
+            }
+        }
+        
+        recta <- -c(w[1], w[3]) / w[2]
+
+        nuevo_etiquetado <- generador_etiquetados(function(x, y){ y - recta[1]*x - recta[2] })
+        nuevas_etiquetas <- nuevo_etiquetado(datos[,1], datos[,2])
+    
+        error_actual <- sum(nuevas_etiquetas != label)
+
+        if(error_actual < mejor_error){
+            mejor_error <- error_actual
+            mejor_solucion <- recta
+        }
+        
+        # plot(datos, asp = 1, col = colores, pch = 20)
+        # abline(rev(recta), col="blue")
+        # Sys.sleep(0.1)
+    }
+    
+    # Return the Sol (a,b) that determine the line y = ax + b, the iterations and the error
+    list(Sol = mejor_solucion, Iter = iteraciones, Err = mejor_error)
+}
+```
+
+```{r prueba_BORRAR}
+ajusta_PLA_MOD(datos.matriz, datos.etiqueta, 10000000, c(0,0))
+```
+
+```{r repetir_7}
+ajusta_PLA_MOD(datos.matriz, etiquetas_2, 1000, c(0,0))
+ajusta_PLA_MOD(datos.matriz, etiquetas_3, 1000, c(0,0))
+ajusta_PLA_MOD(datos.matriz, etiquetas_4, 1000, c(0,0))
+ajusta_PLA_MOD(datos.matriz, etiquetas_5, 1000, c(0,0))
 ```
 
