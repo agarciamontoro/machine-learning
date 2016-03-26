@@ -649,3 +649,118 @@ mensaje <- paste("Número medio de iteraciones tras", num_rep, "repeticiones:", 
 print(mensaje)
 ```
 
+## Ejercicio 8
+
+```{r funcion}
+# Definición de la función f y la función etiquetadora
+f <- function(x1, x2){
+    sign(x1 ** 2 + x2 ** 2 - 25)
+}
+f.etiquetado <- generador_etiquetados(f)
+```
+
+Redefinimos la función de genera_grafico que hicimos antes:
+```{r}
+genera_grafico <- function(dat.x, dat.y, f, etiquetas, generarRuido = F, ...){
+    if(missing(etiquetas)){
+        etiquetado <- generador_etiquetados(f)
+        etiquetas <- etiquetado(dat.x, dat.y)
+    }
+    
+    if(generarRuido){
+        # Get indices of the labelled data, divided into positive and negative
+        indices_pos <- which(etiquetas %in% 1)
+        indices_neg <- which(etiquetas %in% -1)
+        
+        # Get a random sample of those indices, of size 10%
+        cambiar_pos <- sample(indices_pos, round(0.1*length(indices_pos)))
+        cambiar_neg <- sample(indices_neg, round(0.1*length(indices_neg)))
+        
+        # Change those positions
+        etiquetas[cambiar_pos] <- -1
+        etiquetas[cambiar_neg] <- 1
+    }
+    
+    colores <- ifelse(etiquetas == 1, "green", "red")
+
+    plot(dat.x, dat.y, asp = 1, col = colores, pch = 20, ...)
+    
+    f.x <- seq(-50, 50, length=1000)
+    f.y <- seq(-50, 50, length=1000)
+    f.z <- outer(f.x, f.y, f)
+    contour(f.x, f.y, f.z, levels=0, col = "blue", add=T, drawlabels=F)
+
+    return(etiquetas)
+}
+```
+
+Generamos la muestra, las etiquetas y el ruido:
+
+```{r muestra_etiquetas}
+# Generación de la muestra y sus etiquetas con f
+muestra <- generar_muestra(1000)
+
+f.etiquetas <- f.etiquetado(muestra[, 1], muestra[, 2])
+
+ruido.indices <- sample(1000, 100)
+f.etiquetas[ruido.indices] <- -f.etiquetas[ruido.indices]
+
+genera_grafico(muestra[, 1], muestra[, 2], f, f.etiquetas)
+```
+
+Medimos el error dentro de la muestra con regresión lineal repitiendo la cosa 1000 veces:
+
+```{r}
+medir_Ein <- function(muestra, etiquetas){
+    regresion <- Regress_Lin(muestra, etiquetas)
+    g.recta <- -c(regresion[1], regresion[3]) / regresion[2]
+    
+    g <- function(x,y){
+        y - g.recta[1]*x - g.recta[2]
+    }
+    
+    g.etiquetador <- generador_etiquetados(g)
+    g.etiquetas <- g.etiquetador(muestra[, 1], muestra[, 2])
+    
+    E_in <- sum(g.etiquetas != etiquetas)
+    
+    return(E_in / nrow(muestra))
+}
+
+num_rep <- 1000
+
+E_in <- sum(replicate(num_rep, medir_Ein(muestra, f.etiquetas))) / num_rep
+mensaje <- paste("Error medio dentro de la muestra tras", num_rep, "repeticiones:", E_in * 100, "%")
+print(mensaje)
+```
+
+Hacemos la transformación no lineal de los datos:
+
+```{r transformacion}
+m.x <- muestra[, 1]
+m.y <- muestra[, 2]
+muestra.trans <- cbind(m.x, m.y, m.x * m.y, m.x ** 2, m.y ** 2)
+
+w <- Regress_Lin(muestra.trans, f.etiquetas)
+```
+
+Dibujamos el resultado:
+
+```{r pintar}
+g <- function(x, y){
+    w[1]*x + w[2]*y + w[3]*x*y + w[4]*x*x + w[5]*y*y + w[6]
+}
+g.x <- seq(-50, 50, length=1000)
+g.y <- seq(-50, 50, length=1000)
+g.z <- outer(g.x, g.y, g)
+contour(g.x, g.y, g.z, levels=0, col = "black", add=T, drawlabels=F)
+```
+
+
+
+
+
+
+
+
+
