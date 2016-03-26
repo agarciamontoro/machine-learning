@@ -7,6 +7,7 @@ output: pdf_document
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+set.seed(1992)
 ```
 
 # Generalización y visualización de datos
@@ -42,28 +43,28 @@ Primero generamos los datos solicitados, usando la función anterior y tomando c
 
 ```{r test_unif}
 datos_unif <- simula_unif(50, 2, c(-50,50))
-x <- unlist(lapply(datos_unif, '[[', 1))
-y <- unlist(lapply(datos_unif, '[[', 2))
+unif.x <- unlist(lapply(datos_unif, '[[', 1))
+unif.y <- unlist(lapply(datos_unif, '[[', 2))
 ```
 
 Para el dibujo de la gráfica usamos la función `plot`:
 
 ```{r plot_unif}
-plot(x, y, col = 'red', pch = 20, asp=1)
+plot(unif.x, unif.y, col = 'red', pch = 20, asp=1)
 ```
 
 ## Ejercicio 4
 
 ```{r test_gauss}
 datos_norm <- simula_gauss(50, 2, c(5,7))
-x <- unlist(lapply(datos_norm, '[[', 1))
-y <- unlist(lapply(datos_norm, '[[', 2))
+norm.x <- unlist(lapply(datos_norm, '[[', 1))
+norm.y <- unlist(lapply(datos_norm, '[[', 2))
 ```
 
 Para la generación de la gráfica necesitamos conocer el intervalo en el que se mueven los datos. La función `range` nos devuelve justo eso, y con su resultado podemos definir los intervalo de cada eje:
 
 ```{r plot_gauss}
-plot(x, y, xlim = range(x), ylim = range(y), asp = 1, col = 'blue', pch = 20)
+plot(norm.x, norm.y, xlim = range(norm.x), ylim = range(norm.y), asp = 1, col = 'blue', pch = 20)
 ```
 
 ## Ejercicio 5
@@ -112,10 +113,10 @@ Por último, generamos la gráfica solicitada simulando datos de una distribuci�
 ```{r generacion_datos}
 datos_unif <- simula_unif(50, 2, c(-50,50))
 
-x <- unlist(lapply(datos_unif, '[[', 1))
-y <- unlist(lapply(datos_unif, '[[', 2))
+unif.x <- unlist(lapply(datos_unif, '[[', 1))
+unif.y <- unlist(lapply(datos_unif, '[[', 2))
 
-datos <- data.frame(X = x, Y = y, Etiqueta = etiquetado1(x,y))
+datos <- data.frame(X = unif.x, Y = unif.y, Etiqueta = etiquetado1(unif.x, unif.y))
 ```
 
 Por último, generamos la gráfica con `plot`, asignando un color diferente según el etiquetado, y añadiendo la gráfica de la recta simulada:
@@ -230,10 +231,10 @@ genera_grafico <- function(dat.x, dat.y, f, generarRuido = F, ...){
 }
 par(mfrow=c(2, 2))
 
-etiquetas_ruido_2 <- genera_grafico(x, y, f2, generarRuido = T, cex=0.25)
-etiquetas_ruido_3 <- genera_grafico(x, y, f3, generarRuido = T, cex=0.25)
-etiquetas_ruido_4 <- genera_grafico(x, y, f4, generarRuido = T, cex=0.25)
-etiquetas_ruido_5 <- genera_grafico(x, y, f5, generarRuido = T, cex=0.25)
+etiquetas_ruido_2 <- genera_grafico(datos$X, datos$Y, f2, generarRuido = T, cex=0.25)
+etiquetas_ruido_3 <- genera_grafico(datos$X, datos$Y, f3, generarRuido = T, cex=0.25)
+etiquetas_ruido_4 <- genera_grafico(datos$X, datos$Y, f4, generarRuido = T, cex=0.25)
+etiquetas_ruido_5 <- genera_grafico(datos$X, datos$Y, f5, generarRuido = T, cex=0.25)
 
 par(mfrow=c(1, 1))
 ```
@@ -243,9 +244,11 @@ par(mfrow=c(1, 1))
 ## Ejercicio 1
 ```{r PLA}
 ajusta_PLA <- function(datos, label, max_iter, vini){
-    w <- c(vini, 1)
+    w <- ifelse(length(vini) == ncol(datos) + 1, vini, c(vini, 0))
     changing <- T
     iteraciones <- 0
+    
+    datos <- cbind(datos, 1)
     
     while(changing && iteraciones < max_iter){
         iteraciones <- iteraciones+1
@@ -253,10 +256,15 @@ ajusta_PLA <- function(datos, label, max_iter, vini){
         changing <- F
         
         for(index in seq(label)){
-            dato <- c(datos[index,], 1)
+            dato <- datos[index,]
             etiq <- label[index]
             
-            if(sign(sum(w*dato)) != etiq) {
+            # print(w)
+            # print(dato)
+            # print(w %*% dato)
+            # print(sign(w %*% dato))
+
+            if(sign(as.vector(w %*% dato)) != etiq) {
                 w <- w + etiq*dato
                 changing <- T
             }
@@ -270,10 +278,9 @@ ajusta_PLA <- function(datos, label, max_iter, vini){
 
 ## Ejercicio 2
 
-
 ```{r primera_prueba_PLA}
-datos.matriz <- matrix(c(x,y), ncol = 2)
-datos.etiqueta <- etiquetado1(x,y)
+datos.matriz <- matrix(c(unif.x, unif.y), ncol = 2)
+datos.etiqueta <- etiquetado1(unif.x, unif.y)
 
 out_PLA  <- ajusta_PLA(datos.matriz, datos.etiqueta, 10000000, c(0,0))
 solucion <- out_PLA$Sol
@@ -330,8 +337,8 @@ for (max_iter in c(10, 100, 1000)) {
 
 ## Ejercicio 5
 ```{r modifica_PLA}
-ajusta_PLA <- function(datos, label, max_iter, vini, sleep){
-    w <- c(vini, 1)
+ajusta_PLA_sleep <- function(datos, label, max_iter, vini, sleep){
+    w <- ifelse(length(vini) == ncol(datos) + 1, vini, c(vini, 1))
     changing <- T
     iteraciones <- 0
     
@@ -366,11 +373,12 @@ ajusta_PLA <- function(datos, label, max_iter, vini, sleep){
 datos.matriz <- matrix(c(x,y), ncol = 2)
 datos.etiqueta <- etiquetado1(x,y)
 
-out_PLA  <- ajusta_PLA(datos.matriz, datos.etiqueta, 10000000, c(0,0))
+out_PLA  <- ajusta_PLA_sleep(datos.matriz, datos.etiqueta, 10000000, c(0,0))
 
 ```
 
 ```{r repetir_apartado3, eval=FALSE}
+# TODO: ¿hay que usar ajusta_PLA o ajusta_PLA_sleep?
 for (max_iter in c(10, 100, 1000)) {
     analisis_PLA(max_iter, datos$X, datos$Y, datos$Etiqueta)
 }
@@ -383,7 +391,7 @@ Tratamos ahora de quedarnos con la mejor solución. Basta ir almacenando la rect
 
 ```{r PLA_MOD}
 ajusta_PLA_MOD <- function(datos, label, max_iter, vini, sleep){
-    w <- c(vini, 1)
+    w <- ifelse(length(vini) == ncol(datos) + 1, vini, c(vini, 1))
     changing <- T
     iteraciones <- 0
     
@@ -450,6 +458,8 @@ digitos <- read.table("datos/zip.train")
 
 # Nos quedamos únicamente con los números 1 y 5
 digitos <- digitos[ is.element(digitos[,1], c(1,5)), ]
+digitos.unos <- digitos[ digitos[,1] == 1, ]
+digitos.cincos <- digitos[ digitos[,1] == 5, ]
 ```
 
 ```{r imprimir_imagenes}
@@ -464,5 +474,178 @@ apply(digitos[1:16,], 1, function(digito) {
 })
 
 par(mfrow=c(1, 1), "mar" = prev_mar)
+```
+
+## Ejercicio 3
+
+```{r intensidad_simetra}
+analisis_digito <- function(digito){
+    numero <- matrix(tail(digito, -1), nrow = 16)
+    numero.inv <- numero[,ncol(numero):1]
+    
+    intensidad <- mean(digito)
+    simetria <- -sum( abs(numero.inv - numero) )
+    
+    c(head(digito, 1), intensidad, simetria)
+}
+```
+
+## Ejercicio 4
+```{r grafica_analisis}
+digitos.analisis <- t(apply(digitos, 1, analisis_digito))
+
+colores <- ifelse(digitos.analisis[,1] == 1, "green", "red")
+plot(digitos.analisis[,2:3], col = colores, pch = 20)
+```
+
+
+## Ejercicio 5
+
+```{r regresion}
+library(MASS)
+
+Regress_Lin <- function(datos, label){
+    X <- cbind(datos, 1)
+    Y <- label
+    
+    SVD <- svd(X)
+    D <- diag(SVD$d)
+    U <- SVD$u
+    V <- SVD$v
+    
+    XtX_inv <- V %*% ginv(D ** 2) %*% t(V)
+    X_pseudoinv <- XtX_inv %*% t(X)
+    
+    sol <- X_pseudoinv %*% Y
+    
+    return(sol)
+}
+```
+
+## Ejercicio 6
+```{r prueba_regresion}
+digitos.regresion <- Regress_Lin(digitos.analisis[, 2], digitos.analisis[, 3])
+
+colores <- ifelse(digitos.analisis[,1] == 1, "green", "red")
+plot(digitos.analisis[,2:3], col = colores, pch=20)
+abline(rev(digitos.regresion), col="blue")
+```
+
+## Ejercicio 7
+```{r prueba_clasif}
+generar_muestra <- function(tam = 100){
+    datos.muestra <- simula_unif(N = tam, dim = 2, rango = c(-10, 10))
+
+    datos.x <- unlist(lapply(datos.muestra, '[[', 1))
+    datos.y <- unlist(lapply(datos.muestra, '[[', 2))
+    
+    return(matrix(c(datos.x, datos.y), ncol = 2))
+}
+
+generar_etiquetado <- function(muestra){
+    recta <- simula_recta(intervalo = c(-10, 10))
+    
+    f <- function(x,y){
+        y - recta[1]*x - recta[2]
+    }
+    
+    etiquetador <- generador_etiquetados(f)
+    etiquetas <- etiquetador(muestra[, 1], muestra[, 2])
+    
+    return(list(Foo = f, Recta = recta, Etiquetas = etiquetas, Etiquetador = etiquetador))
+}
+```
+
+### Apartado a
+```{r 7a}
+
+reg.muestra <- generar_muestra(100)
+
+medir_Ein <- function(muestra){
+    f.etiquetado <- generar_etiquetado(muestra)
+
+    regresion <- Regress_Lin(muestra, f.etiquetado$Etiquetas)
+    g.recta <- -c(regresion[1], regresion[3]) / regresion[2]
+    
+    g <- function(x,y){
+        y - g.recta[1]*x - g.recta[2]
+    }
+    
+    g.etiquetador <- generador_etiquetados(g)
+    g.etiquetas <- g.etiquetador(muestra[, 1], muestra[, 2])
+    
+    E_in <- sum(g.etiquetas != f.etiquetado$Etiquetas)
+    
+    return(E_in / nrow(muestra))
+}
+
+num_rep <- 1000
+
+E_in <- sum(replicate(num_rep, medir_Ein(reg.muestra))) / num_rep
+mensaje <- paste("Error medio dentro de la muestra tras", num_rep, "repeticiones:", E_in * 100, "%")
+print(mensaje)
+
+```
+
+### Apartado b
+```{r 7b}
+reg.muestra <- generar_muestra(100)
+
+medir_Eout <- function(muestra){
+    # Generamos etiquetado con f
+    f.etiquetado <- generar_etiquetado(muestra)
+
+    # Estimamos g
+    regresion <- Regress_Lin(muestra, f.etiquetado$Etiquetas)
+    g.recta <- -c(regresion[1], regresion[3]) / regresion[2]
+    
+    g <- function(x,y){
+        y - g.recta[1]*x - g.recta[2]
+    }
+    
+    # Generamos una nueva muestra
+    test.muestra <- generar_muestra(1000)
+    
+    # Generamos etiquetado con f de la nueva muestra
+    test.etiquetas <- f.etiquetado$Etiquetador(test.muestra[, 1], test.muestra[, 2])
+    
+    
+    # Generamos etiquetado con g de la nueva muestra
+    g.etiquetador <- generador_etiquetados(g)
+    g.etiquetas <- g.etiquetador(test.muestra[, 1], test.muestra[, 2])
+    
+    E_out <- sum(g.etiquetas != test.etiquetas)
+
+    return(E_out / nrow(test.muestra))
+}
+
+num_rep <- 1000
+
+E_out <- sum(replicate(num_rep, medir_Eout(reg.muestra))) / num_rep
+mensaje <- paste("Error medio fuera de la muestra tras", num_rep, "repeticiones:", E_out * 100, "%")
+print(mensaje)
+```
+
+### Apartado c
+```{r 7c}
+#TODO: mirar qué pasa con la recta si w[2] es cero
+muestra <- generar_muestra(10)
+
+medir_iter_PLA <- function(muestra){
+    # Generamos etiquetado con f
+    f.etiquetado <- generar_etiquetado(muestra)
+
+    # Estimamos g
+    regresion <- Regress_Lin(muestra, f.etiquetado$Etiquetas)
+    PLA <- ajusta_PLA(datos = muestra, label = f.etiquetado$Etiquetas, max_iter = 1000, vini = regresion)
+    
+    return(PLA$Iter)
+}
+
+num_rep <- 1000
+
+num_iter <- sum(replicate(num_rep, medir_iter_PLA(reg.muestra))) / num_rep
+mensaje <- paste("Número medio de iteraciones tras", num_rep, "repeticiones:", num_iter)
+print(mensaje)
 ```
 
