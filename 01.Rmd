@@ -165,7 +165,7 @@ abline(rev(recta))
 
 ## Ejercicio 7
 
-Para realizar este ejercicio definimos las funciones $f_2, f_3, f_4$ y $f_7$ como sigue:
+Para realizar este ejercicio definimos las funciones $f_2, f_3, f_4$ y $f_5$ como sigue:
 
 ```{r def_funciones}
 # Generación de funciones para etiquetar
@@ -328,21 +328,21 @@ Generamos ahora los cuatro gráficos pedidos con las funciones $f_i$ anteriores.
 par(mfrow=c(2, 2), mar=c(0.1, 1.1, 2.1, 0.1), oma=2.5*c(1,1,1,1))
 
 # Generamos los cuatro plots
-etiquetas_2 <- genera_grafico(datos$X, datos$Y, f2, generarRuido = T, cex=0.5, cex.main=0.9,
-                              xlab="", ylab="", xaxt="n",
-                              main=expression(f[2](x,y) == (x-10)^2 + (y-20)^2 - 400))
+etiquetas_ruido_2 <- genera_grafico(datos$X, datos$Y, f2, generarRuido = T, cex=0.5, cex.main=0.9,
+                                    xlab="", ylab="", xaxt="n",
+                                    main=expression(f[2](x,y) == (x-10)^2 + (y-20)^2 - 400))
 
-etiquetas_3 <- genera_grafico(datos$X, datos$Y, f3, generarRuido = T, cex=0.5, cex.main=0.9,
-                              xlab="", ylab="", xaxt="n", yaxt="n",
-                              main=expression(f[3](x,y) == 0.5(x+10)^2 + (y-20)^2 - 400))
+etiquetas_ruido_3 <- genera_grafico(datos$X, datos$Y, f3, generarRuido = T, cex=0.5, cex.main=0.9,
+                                    xlab="", ylab="", xaxt="n", yaxt="n",
+                                    main=expression(f[3](x,y) == 0.5(x+10)^2 + (y-20)^2 - 400))
 
-etiquetas_4 <- genera_grafico(datos$X, datos$Y, f4, generarRuido = T, cex=0.5, cex.main=0.9,
-                              xlab="", ylab="",
-                              main=expression(f[4](x,y) == 0.5(x-10)^2 - (y+20)^2 - 400))
+etiquetas_ruido_4 <- genera_grafico(datos$X, datos$Y, f4, generarRuido = T, cex=0.5, cex.main=0.9,
+                                    xlab="", ylab="",
+                                    main=expression(f[4](x,y) == 0.5(x-10)^2 - (y+20)^2 - 400))
 
-etiquetas_5 <- genera_grafico(datos$X, datos$Y, f5, generarRuido = T, cex=0.5, cex.main=0.9,
-                              xlab="", ylab="", yaxt="n",
-                              main=expression(f[5](x,y) == y - 20*x^2 - 5*x + 3))
+etiquetas_ruido_5 <- genera_grafico(datos$X, datos$Y, f5, generarRuido = T, cex=0.5, cex.main=0.9,
+                                    xlab="", ylab="", yaxt="n",
+                                    main=expression(f[5](x,y) == y - 20*x^2 - 5*x + 3))
 
 mtext("Etiquetado ruidoso de una muestra con diversas funciones", outer=TRUE, line=0.5)
 
@@ -361,6 +361,7 @@ La función implementada para el algoritmo Perceptron es la siguiente:
 # Sol: Recta solución
 # Iter: Número de iteraciones que han sido necesarias
 ajusta_PLA <- function(datos, label, max_iter, vini){
+    
     # Definimos w como el vector inicial. Si tiene una posición más que
     # el número de datos, lo dejamos como está; si no, añadimos un 0.
     w <- ifelse(length(vini) == ncol(datos) + 1, vini, c(vini, 0))
@@ -387,192 +388,376 @@ ajusta_PLA <- function(datos, label, max_iter, vini){
 
             # Comportamiento principal: si la muestra está mal etiquetada,
             # recalcular el hiperplano para etiquetarla bien.
-            if(sign(as.vector(w %*% dato)) != etiq) {
+            if(sign(w %*% dato) != etiq) {
                 w <- w + etiq*dato
                 changing <- T
             }
         }
     }
     
-    # Devolvemos (a,b), coeficientes que determinan la recta y = ax + b y
-    # el número de iteraciones
-    list(Sol = -c(w[1], w[3]) / w[2], Iter = iteraciones)
+    # Devolvemos los pesos, el vector (a,b), coeficientes que determinan la
+    # recta y = ax + b y el número de iteraciones.
+    return(list(Coefs = w, Recta = -c(w[1], w[3]) / w[2], Iter = iteraciones))
 }
 ```
 
+Esta función implementa el algoritmo tal y como lo vimos en clase. La función espera que se reciban los datos originales, sin la columna de unos necesaria para hacer el producto del bucle, así que antes del bucle se añade esta columna. Además, la función se puede llamar con vector inicial sin el $b$ del final, en cuyo caso se añade $b = 0$.
+
+En el bucle principal se encuentra el algoritmo: se itera sobre todos los datos ajustando el vector de pesos $w$ en caso de que la etiqueta contemplada esté mal etiquetada. Cuando no haya cambios tras hacer una pasada completa a la muestra ---en cuyo caso se ha conseguido la solución óptima--- o se llegue al máximo número de iteraciones ---en cuyo caso no se h conseguido la solución óptima, bien porque los datos no sean linealmente separables o porque sean necesarias más iteraciones---, el algoritmo termina.
+
+Se devuelve el vector de pesos y el número de iteraciones que han sido necesarias. Además, se devuelve la recta generada con los pesos; como el hiperplano considerado en todos los ejemplos posteriores es particularment una recta, esto evita tener que hacer esta operación siempre que llamemos a la función y necesitemos la recta.
+
 ## Ejercicio 2
 
-```{r primera_prueba_PLA}
+La primera parte de este ejercicio consiste en llamar a la función anteriormente implementada con el vector inicial $(0,0,0)$ sobre los datos generados en el ejercicio 6 de la anterior sección.
+
+Preparamos entonces los datos generados allí ---`unif.x` y `unif.y`--- en la forma admitida por la función:
+
+```{r prepara_datos}
+# Damos forma de matriz a los datos y generamos el vector de etiquetas
 datos.matriz <- matrix(c(unif.x, unif.y), ncol = 2)
 datos.etiqueta <- etiquetado1(unif.x, unif.y)
+```
 
+Ejecutamos la función implementada anteriormente sobre esos datos, con un número máximo de iteraciones muy alto para que encuentre la solución óptima ---existe porque los datos son linealmente separables---:
+
+```{r prueba_PLA}
+# Ejecución del algoritmo
 out_PLA  <- ajusta_PLA(datos.matriz, datos.etiqueta, 10000000, c(0,0))
-solucion <- out_PLA$Sol
+
+# Guardamos la solución encontrada y el número de iteraciones:
+solucion <- out_PLA$Recta
 iteraciones <- out_PLA$Iter
+```
 
+En este caso, el número de iteraciones es de `r I(iteraciones)`.
+
+```{r, eval=FALSE, include=FALSE}
 print(iteraciones)
+```
 
+Podemos también ver la solución devuelta por el algoritmo junto con las muestras usadas; para ello, generamos un gráfico como hemos hecho en ocasiones anteriores:
+
+```{r}
+# Generamos el vector de colores basado en las etiquetas
 colores <- ifelse(datos.etiqueta == 1, "green", "red")
 
-plot(datos.matriz, asp = 1, col = colores, pch = 20)
+# Generamos el gráfico de la muestra
+plot(datos.matriz, asp = 1, col = colores, pch = 20,
+     main="PLA sobre muestra uniforme", xlab="", ylab="")
+# Añadimos la recta devuelta
 abline(rev(solucion), col="blue")
 ```
 
-El número de iteraciones es `r I(iteraciones)`.
+Ahora hacemos una prueba con vectores iniciales aleatorios. Vamos a usar la función `lapply`, así que primero necesitamos encapsular los pasos que queremos dar en una función, que recibe como único parámetro el vector inicial con el que llamaremos al PLA: 
 
 ```{r PLA_random}
+# Encapsula ajusta_PLA para llamar a lapply
 wrapper <- function(vector){
     datos <- ajusta_PLA(datos.matriz, datos.etiqueta, 10000000, vector)
     return(datos$Iter)
 }
-
-
-inicio_aleatorio <- lapply(simula_unif(10, 2, c(0,1)), wrapper)
-media <- mean(unlist(inicio_aleatorio))
-
 ```
 
-## Ejercicio 3
-```{r repetirPLA}
+Ahora llamamos a esa función con 10 vectores aleatorios de 3 componentes dentro de un `lapply`. Esto nos devuelve una lista de iteraciones, así que lo convertimos en un vector y calculamos su media:
 
+```{r}
+# Ejecutamos PLA 10 veces con vectores aleatorios en [0,1]
+inicio_aleatorio <- lapply(simula_unif(10, 3, c(0,1)), wrapper)
+
+# Calculamos media de iteraciones
+media <- mean(unlist(inicio_aleatorio))
+```
+
+Como vemos, la media es de `r I(media)`, algo menor que en el caso anterior. Así que en este caso y ante estos datos, parece más sensato llamar a esta función con vectores aleatorios.
+
+## Ejercicio 3
+
+En este ejercicio analizamos cómo se comporta el algoritmo PLA con un número fijo de iteraciones ante datos no linealmente separables ---reusamos los datos del ejercicio 8, cuyas etiquetas tenían un 10% de ruido en cada clase---.
+
+Para realizar este experimento encapsulamos la tarea en la función `analisis_PLA`, cuya implementación es la siguiente:
+
+```{r repetirPLA}
+# Analiza el algoritmo PLA ante un número fijo de iteraciones:
 analisis_PLA <- function(max_iter, dat.x, dat.y, dat.etiquetas){
+    
+    # Damos forma a los datos para pasárselos a ajusta_PLA
     datos.matriz <- matrix(c(dat.x, dat.y), ncol = 2)
     
+    # Llamamos a la función y guardamos la recta solución
     out_PLA <- ajusta_PLA(datos.matriz, dat.etiquetas, max_iter, c(0,0))
-    recta <- out_PLA$Sol
+    recta <- out_PLA$Recta
 
+    # Clasificamos con la función etiquetadora determinada por la recta
     nuevo_etiquetado <- generador_etiquetados(function(x, y){ y - recta[1]*x - recta[2] })
     nuevas_etiquetas <- nuevo_etiquetado(dat.x, dat.y)
 
-    mensaje <- paste("Número de etiquetas diferentes con", max_iter, "iteraciones:", sum(nuevas_etiquetas != dat.etiquetas))
+    # Devolvemos el número de muestras mal etiquetadas:
+    return(sum(nuevas_etiquetas != dat.etiquetas))
+}
+```
+
+La función `analisis_PLA` llama al algoritmo PLA, etiqueta la muestra con la recta solución y devuelve el número de muestras mal etiquetadas.
+
+Para llamarlo ejecutamos la función con `lapply` sobre un vector con el número de iteraciones: 10, 100 y 1000.
+
+```{r analisis_repetirPLA}
+# Llamamos a la función con 10, 100 y 1000 iteraciones
+iteraciones <- c(10, 100, 1000)
+analisis <- lapply(iteraciones, analisis_PLA, datos$X, datos$Y, datos$Etiqueta)
+```
+
+```{r, eval=FALSE, include=FALSE}
+# Imprimimos los resultados
+for(i in seq(analisis)){
+    iter <- iteraciones[i]
+    errores <- analisis[[i]]
+    
+    mensaje <- paste("Número de etiquetas diferentes con", iter, "iteraciones:", errores)
     print(mensaje)
 }
-
-for (max_iter in c(10, 100, 1000)) {
-    analisis_PLA(max_iter, datos$X, datos$Y, datos$Etiqueta)
-}
-
 ```
+
+La ejecución del anterior trozo de código nos da el siguiente resultado:
+
+* Número de etiquetas diferentes con 10 iteraciones: `r I(analisis[[1]])`
+* Número de etiquetas diferentes con 100 iteraciones: `r I(analisis[[2]])`
+* Número de etiquetas diferentes con 1000 iteraciones: `r I(analisis[[3]])`
+
+Es claro ante esta salida que un número de iteraciones mayor no implica un número menor de errores. Si los datos no son linealmente separables, el algoritmo PLA está constantemente iterando, pero no se acerca a la mejor solución de forma iterativa. Nada nos asegura que el número de errores sea mejor tras un millón de iteraciones que tras una.
 
 ## Ejercicio 4
+
+Realizamos el mismo experimento que antes, esta vez sobre el etiquetado de la segunda función del ejercicio 7 de la sección anterior. Estos datos tampoco son linealmente separables, no ya porque se haya generado ruido, sino porque el etiquetado original no separaba linealmente las muestras.
+
+De forma análoga al ejercicio anterior, ejecutamos la función `analisis_PLA` con el etiquetado guardado en `etiquetas_2`
 ```{r repetirPLA_8}
-for (max_iter in c(10, 100, 1000)) {
-    analisis_PLA(max_iter, unif.x, unif.y, etiquetas_ruido_2)
+# Llamamos a la función con 10, 100 y 1000 iteraciones
+iteraciones <- c(10, 100, 1000)
+analisis <- lapply(iteraciones, analisis_PLA, unif.x, unif.y, etiquetas_2)
+```
+
+```{r, eval=FALSE, include=FALSE}
+# Imprimimos los resultados
+for(i in seq(analisis)){
+    iter <- iteraciones[i]
+    errores <- analisis[[i]]
+    
+    mensaje <- paste("Número de etiquetas diferentes con", iter, "iteraciones:", errores)
+    print(mensaje)
 }
 ```
 
+La ejecución del anterior trozo de código nos da el siguiente resultado:
+
+* Número de etiquetas diferentes con 10 iteraciones: `r I(analisis[[1]])`
+* Número de etiquetas diferentes con 100 iteraciones: `r I(analisis[[2]])`
+* Número de etiquetas diferentes con 1000 iteraciones: `r I(analisis[[3]])`
+
+Ante estos datos se refuerza el anterior comentario: nada pueda asegurar, ante datos no linealmente separables, que un número mayor de iteraciones produzca un mejor resultado.
+
 ## Ejercicio 5
+
+Modificamos ahora la función `ajusta_PLA` de manera que en cada iteración ---esto es, tras cada pasada completa de los datos--- se redibuje la gráfica con las muestras y la recta encontrada hasta ese momento. Para hacer esto basta llamar a `plot` y `abline` para generar el gráfico y llamar a `Sys.sleep()` para pausar la ejecución y poder ver la animación. La función modificada se queda como sigue:
+
 ```{r modifica_PLA}
-ajusta_PLA_sleep <- function(datos, label, max_iter, vini, sleep){
-    w <- ifelse(length(vini) == ncol(datos) + 1, vini, c(vini, 1))
+# Implementa el algoritmo Perceptron. Devuelve una lista con dos valores:
+# Sol: Recta solución
+# Iter: Número de iteraciones que han sido necesarias
+ajusta_PLA_anim <- function(datos, label, max_iter, vini){
+    
+    # Definimos w como el vector inicial. Si tiene una posición más que
+    # el número de datos, lo dejamos como está; si no, añadimos un 0.
+    w <- ifelse(length(vini) == ncol(datos) + 1, vini, c(vini, 0))
+    
+    # Variables usadas en el bucle
     changing <- T
     iteraciones <- 0
     
+    # Añadimos una columna de unos a los datos
+    datos <- cbind(datos, 1)
+    
+    # Generamos el vector de colores basado en las etiquetas
     colores <- ifelse(label == 1, "green", "red")
     
+    # Bucle principal, del que salimos si no ha habido cambios tras una
+    # pasada completa a los datos (solución encontrada) o si se ha llegado
+    # al máximo de iteraciones permitidas (solución no encontrada)
     while(changing && iteraciones < max_iter){
         iteraciones <- iteraciones+1
         
         changing <- F
         
+        # Bucle sobre toda la muestra
         for(index in seq(label)){
-            dato <- c(datos[index,], 1)
+            dato <- datos[index,]
             etiq <- label[index]
-            
-            if(sign(sum(w*dato)) != etiq) {
+
+            # Comportamiento principal: si la muestra está mal etiquetada,
+            # recalcular el hiperplano para etiquetarla bien.
+            if(sign(w %*% dato) != etiq) {
                 w <- w + etiq*dato
                 changing <- T
             }
         }
         
-        plot(datos, asp = 1, col = colores, pch = 20)
+        # Generamos la gráfica con la muestra coloreada
+        plot(tail(datos,-1), asp = 1, col = colores, pch = 20,
+             main=paste("Ajustando PLA con",max_iter,"iteraciones"), xlab="", ylab="")
+        # Añadimos la recta actual
         abline(-c(w[3], w[1]) / w[2], col="blue")
-        Sys.sleep(0.1)
+        # Pausamos 0.1 segundos
+        Sys.sleep(0.2)
     }
     
-    # Return the Sol (a,b) that determine the line y = ax + b and the iterations
-    list(Sol = -c(w[1], w[3]) / w[2], Iter = iteraciones)
+    # Redibujamos la recta con más grosor
+    abline(-c(w[3], w[1]) / w[2], col="blue", lwd=2)
+    # Pausamos 1 segundo
+    Sys.sleep(1)
+    
+    # Devolvemos los pesos, el vector (a,b), coeficientes que determinan la
+    # recta y = ax + b y el número de iteraciones.
+    return(list(Coefs = w, Recta = -c(w[1], w[3]) / w[2], Iter = iteraciones))
 }
 ```
 
-```{r prueba_nuevo_PLA}
-datos.matriz <- matrix(c(unif.x, unif.y), ncol = 2)
-datos.etiqueta <- etiquetado1(unif.x, unif.y)
+Basta ahora ejecutar el siguiente código para ver las tres animaciones que se generan:
 
-out_PLA  <- ajusta_PLA_sleep(datos.matriz, datos.etiqueta, 10000000, c(0,0))
+```{r apply, eval=FALSE}
+# Damos forma a los datos
+datos.matriz <- matrix(c(datos$X, datos$Y), ncol = 2)
 
-```
-
-```{r repetir_apartado3, eval=FALSE}
-# TODO: ¿hay que usar ajusta_PLA o ajusta_PLA_sleep?
-for (max_iter in c(10, 100, 1000)) {
-    analisis_PLA(max_iter, datos$X, datos$Y, datos$Etiqueta)
+# Llamamos a la función con 10, 100 y 1000 iteraciones
+for(max_iter in c(10,100,1000)){
+    ajusta_PLA_anim(datos.matriz, datos$Etiqueta, max_iter, c(0,0))
 }
-
 ```
 
 ## Ejercicio 6
 
-Tratamos ahora de quedarnos con la mejor solución. Basta ir almacenando la recta que menor etiquetas erróneas tenga, de manera que tras el número máximo de iteraciones, si no se ha encontrado la óptima, devolvamos la más cercana.
+La modificación del algoritmo PLA es sencilla: tratamos ahora de quedarnos con la mejor solución. Basta ir almacenando la recta que menor etiquetas erróneas tenga, de manera que tras el número máximo de iteraciones, si no se ha encontrado la óptima, se devuelva la mejor de entre las analizadas. Esta modificación es, de hecho, el algoritmo *Pocket*. La función modificada es la siguiente:
 
 ```{r PLA_MOD}
-ajusta_PLA_MOD <- function(datos, label, max_iter, vini, sleep){
-    w <- ifelse(length(vini) == ncol(datos) + 1, vini, c(vini, 1))
+# Implementa el algoritmo Perceptron. Devuelve una lista con dos valores:
+# Sol: Recta solución
+# Iter: Número de iteraciones que han sido necesarias
+ajusta_PLA_MOD <- function(datos, label, max_iter, vini){
+    
+    # Definimos w como el vector inicial. Si tiene una posición más que
+    # el número de datos, lo dejamos como está; si no, añadimos un 0.
+    w <- ifelse(length(vini) == ncol(datos) + 1, vini, c(vini, 0))
+    
+    # Variables usadas en el bucle
     changing <- T
     iteraciones <- 0
     
-    colores <- ifelse(label == 1, "green", "red")
+    # Añadimos una columna de unos a los datos
+    datos <- cbind(datos, 1)
     
     # Inicializamos el número de errores al total de datos recibidos
     mejor_error <- length(datos[,1])
     
+    # Bucle principal, del que salimos si no ha habido cambios tras una
+    # pasada completa a los datos (solución encontrada) o si se ha llegado
+    # al máximo de iteraciones permitidas (solución no encontrada)
     while(changing && iteraciones < max_iter){
         iteraciones <- iteraciones+1
         
         changing <- F
         
+        # Bucle sobre toda la muestra
         for(index in seq(label)){
-            dato <- c(datos[index,], 1)
+            dato <- datos[index,]
             etiq <- label[index]
-            
-            if(sign(sum(w*dato)) != etiq) {
+
+            # Comportamiento principal: si la muestra está mal etiquetada,
+            # recalcular el hiperplano para etiquetarla bien.
+            if(sign(w %*% dato) != etiq) {
                 w <- w + etiq*dato
                 changing <- T
             }
         }
         
+        # Definimos la recta generada por los pesos
         recta <- -c(w[1], w[3]) / w[2]
 
+        # Etiquetamos la muestra con la nueva recta
         nuevo_etiquetado <- generador_etiquetados(function(x, y){ y - recta[1]*x - recta[2] })
         nuevas_etiquetas <- nuevo_etiquetado(datos[,1], datos[,2])
     
+        # Calculamos el número de muestras mal etiquetadas con la recta actual
         error_actual <- sum(nuevas_etiquetas != label)
 
+        # Si el error actual es mejor que el mejor encontrado hasta ahora, guardamos
+        # los pesos actuales y actualizamos el mejor error
         if(error_actual < mejor_error){
             mejor_error <- error_actual
-            mejor_solucion <- recta
+            mejor_solucion <- w
         }
-        
-        # plot(datos, asp = 1, col = colores, pch = 20)
-        # abline(rev(recta), col="blue")
-        # Sys.sleep(0.1)
     }
     
-    # Return the Sol (a,b) that determine the line y = ax + b, the iterations and the error
-    list(Sol = mejor_solucion, Iter = iteraciones, Err = mejor_error)
+    # Actualizamos w con la mejor solución
+    w <- mejor_solucion
+    
+    # Devolvemos los pesos, el vector (a,b), coeficientes que determinan la
+    # recta y = ax + b y el número de iteraciones.
+    return(list(Coefs = w, Recta = -c(w[1], w[3]) / w[2], Iter = iteraciones))
 }
 ```
 
-```{r prueba_BORRAR}
-ajusta_PLA_MOD(datos.matriz, datos.etiqueta, 10000000, c(0,0))
+La única modificación se encuentra tras el bucle que recorre todas las muestras. Después de cada pasada se etiqueta la muestra con la recta encontrada en ese momento y se contabiliza el número de muestras mal etiquetadas. Si ese error es mejor que el mejor encontrado hasta el momento, se guarda la solución actual y se actualiza el error. La función devuelve entonces la mejor solución encontrada.
+
+Para probar la modificación vamos a comparar el número de mejoras que se producen con la muestra uniforme y los etiquetados generados en el ejercicio 7 de la sección anterior. Para ello, modificamos nuestra función de análisis para que el primer parámetro, `dat.etiquetas`, sea el vector de etiquetas y para que reciba la función con la que ajustar PLA: el parámetro `ajuste`. La función modificada queda así:
+
+```{r repetirPLA2}
+# Analiza el algoritmo PLA ante un número fijo de iteraciones:
+analisis_PLA_MOD <- function(dat.etiquetas, ajuste, dat.x, dat.y){
+    
+    # Damos forma a los datos para pasárselos a ajusta_PLA
+    datos.matriz <- matrix(c(dat.x, dat.y), ncol = 2)
+    
+    # Llamamos a la función y guardamos la recta solución
+    out_PLA <- ajuste(datos.matriz, dat.etiquetas, 1000, c(0,0))
+    recta <- out_PLA$Recta
+
+    # Clasificamos con la función etiquetadora determinada por la recta
+    nuevo_etiquetado <- generador_etiquetados(function(x, y){ y - recta[1]*x - recta[2] })
+    nuevas_etiquetas <- nuevo_etiquetado(dat.x, dat.y)
+
+    # Devolvemos el número de muestras mal etiquetadas:
+    return(sum(nuevas_etiquetas != dat.etiquetas))
+}
 ```
 
-```{r repetir_7}
-ajusta_PLA_MOD(datos.matriz, etiquetas_2, 1000, c(0,0))
-ajusta_PLA_MOD(datos.matriz, etiquetas_3, 1000, c(0,0))
-ajusta_PLA_MOD(datos.matriz, etiquetas_4, 1000, c(0,0))
-ajusta_PLA_MOD(datos.matriz, etiquetas_5, 1000, c(0,0))
+Llamamos ahora a esta función dos veces, una con la función `ajusta_PLA` y otra con `ajusta_PLA_MOD`, en ambos casos iterando sobre la lista de etiquetas generadas en el apartado 7:
+```{r}
+# Lista de etiquetas del ejercicio 7 de la sección anterior
+lista_etiquetas <- list(etiquetas_2, etiquetas_3, etiquetas_4, etiquetas_5)
+
+# Generamos un vector con el número de muestras mal etiquetadas con ajusta_PLA
+errores <- unlist(lapply(lista_etiquetas, analisis_PLA_MOD, ajusta_PLA, unif.x, unif.y))
+
+# Generamos un vector con el número de muestras mal etiquetadas con ajusta_PLA_MOD
+errores_MOD <- unlist(lapply(lista_etiquetas, analisis_PLA_MOD, ajusta_PLA_MOD, unif.x, unif.y))
 ```
+
+```{r, eval=FALSE, include=FALSE}
+funciones <- c("f_2", "f_3", "f_4", "f_5")
+for(index in seq(errores)){
+    mensaje <- paste("El algoritmo pocket tiene", errores[index] - errores_MOD[index],
+                     "muestras erróneas menos que el algoritmo PLA original con la función", funciones[index])
+    print(mensaje)
+}
+```
+
+El resultado devuelto por el anterior código se resume así:
+
+* El algoritmo pocket tiene `r I(errores[1] - errores_MOD[1])` muestras erróneas menos que el algoritmo PLA original con la función $f_2$.
+* El algoritmo pocket tiene `r I(errores[2] - errores_MOD[2])` muestras erróneas menos que el algoritmo PLA original con la función $f_3$.
+* El algoritmo pocket tiene `r I(errores[3] - errores_MOD[3])` muestras erróneas menos que el algoritmo PLA original con la función $f_4$.
+* El algoritmo pocket tiene `r I(errores[4] - errores_MOD[4])` muestras erróneas menos que el algoritmo PLA original con la función $f_5$.
+
+Como vemos, la mejora con el algoritmo pocket es evidente.
 
 # Regresión lineal
 
@@ -595,7 +780,7 @@ par(mfrow = c(4, 4), "mar" = c(1,1,1,1))
 
 apply(digitos[1:16,], 1, function(digito) {
     numero <- matrix(tail(digito, -1), nrow = 16)
-    numero <- numero[,ncol(numero):1]
+    numero <- numero[, ncol(numero):1]
     image(numero, col = gray(seq(1,0,length=256)), axes = F, pty="s", asp=1)
 })
 
@@ -851,7 +1036,7 @@ w <- Regress_Lin(muestra.trans, f.etiquetas)
 
 Dibujamos el resultado:
 
-```{r pintar}
+```{r pintar, eval=FALSE, include=FALSE}
 g <- function(x, y){
     w[1]*x + w[2]*y + w[3]*x*y + w[4]*x*x + w[5]*y*y + w[6]
 }
@@ -866,7 +1051,7 @@ contour(g.x, g.y, g.z, levels=0, col = "red", add=T, drawlabels=F)
 
 Medimos el error dentro de la muestra con los datos transformados
 
-```{r}
+```{r, eval=FALSE, include=FALSE}
 medir_Ein <- function(){
     muestra <- generar_muestra(1000)
     
@@ -903,7 +1088,7 @@ print(mensaje)
 
 Medimos el error fuera de la muestra con los datos transformados:
 
-```{r}
+```{r, eval=FALSE, include=FALSE}
 medir_Eout <- function(g.etiquetado, f.etiquetado){
     # Generamos una nueva muestra
     test.muestra <- generar_muestra(1000)
