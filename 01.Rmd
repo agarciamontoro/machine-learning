@@ -6,6 +6,7 @@ output: pdf_document
 ---
 
 ```{r setup, include=FALSE}
+rm(list=ls())
 knitr::opts_chunk$set(echo = TRUE)
 set.seed(1992)
 ```
@@ -14,48 +15,61 @@ set.seed(1992)
 
 ## Ejercicio 1
 
-La siguiente función genera una lista de `N` vectores. Cada uno de ellos contiene una muestra de tamaño `dim` de una distribución uniforme entre los valores especificados por `rango`.
-
-La implementación es sencilla: como `runif` ---el generador aleatorio de muestras de una distribución uniforme--- recibe el número de muestras que se desean tomar, basta aplicar esta función al número `dim` tantas veces como indique `N`. Esto se consigue con la función `lapply`, que genera una lista del mismo tamaño que la list que se le pasa como primer argumento, ejecutando entonces la función pasada como segundo argumento sobre cada uno de los valores de la lista.
-
+Para la realización de este ejercicio se ha implementado la siguiente función, que genera una lista de `N` vectores, cada de los cuales contiene una muestra de tamaño `dim` de una distribución uniforme entre los valores especificados por el vector de dos elementos `rango`.
 
 ```{r simula_unif}
+# Devuelve una lista de N vectores de dimensión dim con una muestra
+# uniforme en el intervalo [rango[1], rango[2]]
 simula_unif <- function(N, dim, rango){
     lapply(rep(dim, N), runif, min = rango[1], max = rango[2])
 }
 ```
 
+La implementación es sencilla: como `runif` ---el generador aleatorio de muestras de una distribución uniforme--- recibe el número de muestras que se desea generar, basta aplicar esta función al número `dim` tantas veces como se indique en `N`. Esto se consigue con la función `lapply`, que devuelve una lista del mismo tamaño que la lista que se le pasa como primer argumento, ejecutando entonces la función pasada como segundo argumento sobre cada uno de los valores de la lista.
+
 ## Ejercicio 2
 
-La siguiente función genera una lista de `N` vectores. Cada uno de ellos contiene una muestra de tamaño `dim` de una distribución gaussiana de media 0 y desviación típica correspondiente al elemento especificado en el vector `sigma`.
-
-La implementacióne es igual que la anterior, cambiando la función `runif` por `rnorm`.
+De forma análogo al ejercicio anterior, la siguiente función genera una lista de `N` vectores, cada de los cuales contiene una muestra de tamaño `dim` de una distribución gaussiana de media 0 y desviación típica correspondiente al elemento i-ésimo especificado en el vector `sigma`.
 
 ```{r simula_gauss}
+# Devuelve una lista de N vectores de dimensión dim con una muestra
+# gaussiana de media cero y desviación sigma
 simula_gauss <- function(N, dim, sigma){
     lapply(rep(dim, N), rnorm, mean = 0, sd = sigma)
 }
 ```
 
+La implementación es análoga a la anterior, cambiando la función `runif` por `rnorm`. En este caso, además, es necesario notar que el elemento i-ésimo del vector `sigma`, que tiene dimensión igual a `dim` ---si no tiene la misma dimensión, se ciclará sobre él como es habitual en R---, indica la desviación que tendrá la muestra i-ésima de cada uno de los vectores devueltos.
+
 ## Ejercicio 3
 
-Primero generamos los datos solicitados, usando la función anterior y tomando como `x` (resp. `y`) los primeros (resp. segundos) valores de cada vector generado:
+Para la resolución de este ejercicio generamos primero los datos solicitados, usando la función anterior y tomando como `x` (resp. `y`) los primeros (resp. segundos) valores de cada vector generado:
 
 ```{r test_unif}
+# Muestra uniforme de 50 puntos en el cuadrado [-50,50] x [-50,50]
 datos_unif <- simula_unif(50, 2, c(-50,50))
+
+# Guardamos las coordenadas en variables diferentes
 unif.x <- unlist(lapply(datos_unif, '[[', 1))
 unif.y <- unlist(lapply(datos_unif, '[[', 2))
 ```
 
-Para el dibujo de la gráfica usamos la función `plot`:
+Para el dibujo de la gráfica basta usar la función `plot`:
 
 ```{r plot_unif}
-plot(unif.x, unif.y, col = 'red', pch = 20, asp=1)
+plot(unif.x, unif.y, col = 'red', pch = 20, asp=1,
+     main="Muestra uniforme", xlab="", ylab="")
 ```
 
 ## Ejercicio 4
 
+Igual que antes, generamos primero los datos y guardamos en variables diferentes las ordenadas y las abscisas:
+
 ```{r test_gauss}
+# Muestra gaussiana de 50 puntos con media 0, desviación 5 en la
+# abscisa y desviación 7 en la ordenada
+
+# Guardamos las coordenadas en variables diferentes
 datos_norm <- simula_gauss(50, 2, c(5,7))
 norm.x <- unlist(lapply(datos_norm, '[[', 1))
 norm.y <- unlist(lapply(datos_norm, '[[', 2))
@@ -64,12 +78,17 @@ norm.y <- unlist(lapply(datos_norm, '[[', 2))
 Para la generación de la gráfica necesitamos conocer el intervalo en el que se mueven los datos. La función `range` nos devuelve justo eso, y con su resultado podemos definir los intervalo de cada eje:
 
 ```{r plot_gauss}
-plot(norm.x, norm.y, xlim = range(norm.x), ylim = range(norm.y), asp = 1, col = 'blue', pch = 20)
+plot(norm.x, norm.y, col = 'blue', pch = 20, asp = 1,
+     main="Muestra gaussiana", xlab="Abscisas (desviación = 5)", ylab="Ordenadas (desviación = 7)")
 ```
 
 ## Ejercicio 5
 
+Para la generación de una recta aleatoria se ha implementado la siguiente función:
+
 ```{r simula_recta}
+# Genera los parámetros (a,b) de una recta aleatoria y = a*x + b que corta
+# al cuadrado [intervalo[1], intervalo[2]] x [intervalo[1], intervalo[2]]
 simula_recta <- function(intervalo){
     # Simulamos dos puntos dentro del cuadrado intervalo x intervalo
     punto1 <- runif(2, min=intervalo[1], max=intervalo[2])
@@ -85,8 +104,12 @@ simula_recta <- function(intervalo){
 ```
 
 ## Ejercicio 6
-Para este ejercicio y el siguiente vamos a crear una estructura abstracta que genera funciones etiquetadoras. Para ello, definimos `generador_etiquetados`, una función que al ser llamada con otra función `f` como parámetro, devuelve una función etiquetadora; es decir, una función que devuelve 1 o -1 según el signo que toma la función `f` al recibir los parámetros `x` e `y`:
+
+Para este ejercicio y el resto de la práctica vamos a crear una estructura abstracta que genera funciones etiquetadoras. Para ello, definimos `generador_etiquetados`, una función que al ser llamada con otra función `f` como parámetro devuelve una función etiquetadora; es decir, una función que devuelve 1 o -1 según el signo que toma la función `f` al recibir los parámetros `x` e `y`:
+
 ```{r generador_etiquetado}
+# Devuelve una función etiquetadora basada en el signo que
+# toma el parámetro f
 generador_etiquetados <- function(f){
     function(x,y){
         sign(f(x,y))
@@ -96,42 +119,56 @@ generador_etiquetados <- function(f){
 
 Resolver el ejercicio con la estructura anterior es ahora más sencillo: simplemente tenemos que definir la función $f(x,y) = y - ax - b$, donde $a$ y $b$ son los parámetros que definen la recta $y = ax + b$.
 
-Por tanto, basta simular una recta haciendo uso de la función implementada anteriormente y definir la función `f1`, que será la que pasaremos al generador de funciones etiquetadoras:
+Por tanto, basta simular una recta haciendo uso de la función implementada anteriormente y definir la función $f_1$, que será la que pasaremos al generador de funciones etiquetadoras:
 
 ```{r etiquetado_6}
+# Generamos recta aleatoria
 recta <- simula_recta(c(-50,50))
 
+# Definimos la función cuyo signo etiquetará los datos
 f1 <- function(x,y){
     y - recta[1]*x - recta[2]
 }
 
+# Generamos función etiquetadora
 etiquetado1 <- generador_etiquetados(f1)
 ```
 
 Por último, generamos la gráfica solicitada simulando datos de una distribución uniforme: extraemos los datos de las ordenadas, los de las abscisas y generamos los etiquetados con la función `etiquetado1`:
 
 ```{r generacion_datos}
+# Generamos muestra uniforme aleatoria
 datos_unif <- simula_unif(50, 2, c(-50,50))
 
+# Guardamos las coordenadas en variables separadas
 unif.x <- unlist(lapply(datos_unif, '[[', 1))
 unif.y <- unlist(lapply(datos_unif, '[[', 2))
 
+# Encapsulamos los datos y las etiquetas en un data frame
 datos <- data.frame(X = unif.x, Y = unif.y, Etiqueta = etiquetado1(unif.x, unif.y))
 ```
 
 Por último, generamos la gráfica con `plot`, asignando un color diferente según el etiquetado, y añadiendo la gráfica de la recta simulada:
 
 ```{r plot}
+# Definimos un vector de colores basado en las etiqueta
 colores <- ifelse(datos$Etiqueta == 1, "green", "red")
 
-plot(datos$X, datos$Y, xlim = range(datos$X), ylim = range(datos$Y), asp = 1, col = colores, pch = 20)
+# Generamos la gráfica
+plot(datos$X, datos$Y, asp = 1, col = colores, pch = 20,
+     main="Muestra uniforme etiquetada", xlab="", ylab="")
+
+# Dibujamos la recta clasificadora
 abline(rev(recta))
 ```
 
 
 ## Ejercicio 7
 
+Para realizar este ejercicio definimos las funciones $f_2, f_3, f_4$ y $f_7$ como sigue:
+
 ```{r def_funciones}
+# Generación de funciones para etiquetar
 f2 <- function(x,y){
     (x-10)**2 + (y-20)**2 - 400
 }
@@ -149,123 +186,207 @@ f5 <- function(x,y){
 }
 ```
 
+Vamos a definir ahora una función que encapsula el trabajo de etiquetar la muestra, dibujarla y añadir la gráfica de las funciones $f_i$. Dejamos además que se le pasen argumentos arbitrarios con los que llamar a la función plot, para poder manejar desde fuera las opciones del dibujado:
+
 ```{r genera_grafico}
+# Etiqueta la muestra (dat.x, dat.y) con la función f y genera el
+# correspondiente gráfico
 genera_grafico <- function(dat.x, dat.y, f, ...){
+    # Etiqueta la muestra
     etiquetado <- generador_etiquetados(f)
     etiquetas <- etiquetado(dat.x, dat.y)
     
+    # Genera vector de colores basado en las etiquetas
     colores <- ifelse(etiquetas == 1, "green", "red")
 
+    # Dibujo de la muestra (pasamos los argumentos ... a plot)
     plot(dat.x, dat.y, asp = 1, col = colores, pch = 20, ...)
     
+    # Dibujo de la gráfica de la función
     f.x <- seq(-50, 50, length=1000)
     f.y <- seq(-50, 50, length=1000)
     f.z <- outer(f.x, f.y, f)
     contour(f.x, f.y, f.z, levels=0, col = "blue", add=T, drawlabels=F)
     
+    # Devolvemos las etiquetas, que las necesitaremos más adelante:
     return(etiquetas)
 }
-
-par(mfrow=c(2, 2))
-
-etiquetas_2 <- genera_grafico(unif.x, unif.y, f2, cex=0.25)
-etiquetas_3 <- genera_grafico(unif.x, unif.y, f3, cex=0.25)
-etiquetas_4 <- genera_grafico(unif.x, unif.y, f4, cex=0.25)
-etiquetas_5 <- genera_grafico(unif.x, unif.y, f5, cex=0.25)
-
-par(mfrow=c(1, 1))
 ```
+
+Generamos ahora un gráfico multiple con 4 plots. Para esto, definimos la estructura con `par()` y llamamos a la función anterior con los parámetros de cada plot:
+
+```{r dibujar}
+# Definimos una rejilla 2x2 para los plots
+old_mfrow <- par()$mfrow
+old_mar <- par()$mar
+old_oma <- par()$oma
+
+par(mfrow=c(2, 2), mar=c(0.1, 1.1, 2.1, 0.1), oma=2.5*c(1,1,1,1))
+
+# Generamos los cuatro plots
+etiquetas_2 <- genera_grafico(unif.x, unif.y, f2, cex=0.5, cex.main=0.9, xlab="", ylab="", xaxt="n",
+                              main=expression(f[2](x,y) == (x-10)^2 + (y-20)^2 - 400))
+
+etiquetas_3 <- genera_grafico(unif.x, unif.y, f3, cex=0.5, cex.main=0.9, xlab="", ylab="", xaxt="n", yaxt="n",
+                              main=expression(f[3](x,y) == 0.5(x+10)^2 + (y-20)^2 - 400))
+
+etiquetas_4 <- genera_grafico(unif.x, unif.y, f4, cex=0.5, cex.main=0.9, xlab="", ylab="",
+                              main=expression(f[4](x,y) == 0.5(x-10)^2 - (y+20)^2 - 400))
+
+etiquetas_5 <- genera_grafico(unif.x, unif.y, f5, cex=0.5, cex.main=0.9, xlab="", ylab="", yaxt="n",
+                              main=expression(f[5](x,y) == y - 20*x^2 - 5*x + 3))
+
+mtext("Etiquetado de una muestra con diversas funciones", outer=TRUE, line=0.5)
+
+# Dejamos los parámetros como estaban anteriormente
+par(mfrow=old_mfrow, mar=old_mar, oma=old_oma)
+```
+
+La forma de las regiones positiva y negativa depende, obviamente, de la función con la que se genera el etiquetado. $f_2$ divide la muestra con una circunferencia, $f_3$ con una elipse, $f_4$ con una hipérbola y $f_5$ con una parábola. Podemos notar, además, como la muestra considerada no da ninguna información con $f_4$, ya que la región verde se queda vacía; todas las muestras se etiquetan como rojas. En las demás pasa algo parecido, ya que una de las regiones es mucho más pequeña que la otra, con lo que la cantidad de muestras en la región menor dará poca información para el proceso de aprendizaje.
 
 ## Ejercicio 8
 
+Para realizar este ejercicio retomamos la variable `datos` definida en el ejercicio 6 y generamos ruido, tomando un 10% de las muestras positivas, otro 10% de las negativas y cambiándole el signo a ambas.
+
 ```{r cambio_etiquetas}
-# Get indices of the labelled data, divided into positive and negative
+# Tomamos los indices de las etiquetas positivas y los de las etiquetas negativas.
 indices_pos <- which(datos$Etiqueta %in% 1)
 indices_neg <- which(datos$Etiqueta %in% -1)
 
-# Get a random sample of those indices, of size 10%
+# Tomamos una muestra del 10% de esos índices
 cambiar_pos <- sample(indices_pos, round(0.1*length(indices_pos)))
 cambiar_neg <- sample(indices_neg, round(0.1*length(indices_neg)))
 
-# Change those positions
+# Los índices positivos los ponemos a -1 y los negativos a 1
 datos$Etiqueta[cambiar_pos] <- -1
 datos$Etiqueta[cambiar_neg] <- 1
 ```
 
+Generamos ahora el gráfico con las etiquetas cambiadas. Retomamos además la variable `recta` definida en el ejercicio 6 y la dibujamos encima.
+
 ```{r redibujado}
+# Generamos vector de colores con las nuevas etiquetas
 colores <- ifelse(datos$Etiqueta == 1, "green", "red")
 
-plot(datos$X, datos$Y, xlim = range(datos$X), ylim = range(datos$Y), asp = 1, col = colores, pch = 20)
+# Dibujamos la muestra con los colores recién calculados y la recta del apartado 6
+plot(datos$X, datos$Y, asp = 1, col = colores, pch = 20,
+     main="Muestra uniforme con ruido", xlab="", ylab="")
 abline(rev(recta), col="blue")
 ```
 
+Generalizamos ahora la función `genera_grafico()` definida en el anterior apartado. Añadimos dos parámetros:
+* `etiquetas`: Vector de etiquetas previamente calculado. Si no se pasa este parámetro, se generan con la f.
+* `generarRuido`: Variable booleana que indica si se genera un 10% de ruido en las muestras tanto positivas como negativas.
+
+El parámetro `generarRuido` lo necesitamos ahora para cambiar el 10% de las etiquetas en cada ejecución. El parámetro `etiquetas`, aunque ahora no lo usaremos, será necesario más adelante:
+
 ```{r redibujado_otras}
+# Etiqueta la muestra (dat.x, dat.y) con la función f y genera el
+# correspondiente gráfico
 genera_grafico <- function(dat.x, dat.y, f, etiquetas, generarRuido = F, ...){
+    # Si el parámetro etiquetas no se ha pasado, se generan con la f
     if(missing(etiquetas)){
         etiquetado <- generador_etiquetados(f)
         etiquetas <- etiquetado(dat.x, dat.y)
     }
     
+    # Se genera ruido en el 10% de etiquetas positivas y negativas
     if(generarRuido){
-        # Get indices of the labelled data, divided into positive and negative
+        # Tomamos los indices de las etiquetas positivas y los de las etiquetas negativas.
         indices_pos <- which(etiquetas %in% 1)
         indices_neg <- which(etiquetas %in% -1)
         
-        # Get a random sample of those indices, of size 10%
+        # Tomamos una muestra del 10% de esos índices
         cambiar_pos <- sample(indices_pos, round(0.1*length(indices_pos)))
         cambiar_neg <- sample(indices_neg, round(0.1*length(indices_neg)))
         
-        # Change those positions
+        # Los índices positivos los ponemos a -1 y los negativos a 1
         etiquetas[cambiar_pos] <- -1
         etiquetas[cambiar_neg] <- 1
     }
     
+    # Genera vector de colores basado en las etiquetas
     colores <- ifelse(etiquetas == 1, "green", "red")
 
+    # Dibujo de la muestra (pasamos los argumentos ... a plot)
     plot(dat.x, dat.y, asp = 1, col = colores, pch = 20, ...)
     
+    # Dibujo de la gráfica de la función
     f.x <- seq(-50, 50, length=1000)
     f.y <- seq(-50, 50, length=1000)
     f.z <- outer(f.x, f.y, f)
     contour(f.x, f.y, f.z, levels=0, col = "blue", add=T, drawlabels=F)
-    
+        
+    # Devolvemos las etiquetas, que las necesitaremos más adelante:
     return(etiquetas)
 }
-par(mfrow=c(2, 2))
-
-etiquetas_ruido_2 <- genera_grafico(datos$X, datos$Y, f2, generarRuido = T, cex=0.25)
-etiquetas_ruido_3 <- genera_grafico(datos$X, datos$Y, f3, generarRuido = T, cex=0.25)
-etiquetas_ruido_4 <- genera_grafico(datos$X, datos$Y, f4, generarRuido = T, cex=0.25)
-etiquetas_ruido_5 <- genera_grafico(datos$X, datos$Y, f5, generarRuido = T, cex=0.25)
-
-par(mfrow=c(1, 1))
 ```
+
+Generamos ahora los cuatro gráficos pedidos con las funciones $f_i$ anteriores. Para ello, le pasamos la muestra a la función `genera_grafico`, calculamos las etiquetas con cada función $f_i$ y generamos un 10% de ruido en cada subconjunto de etiquetas:
+
+```{r}
+par(mfrow=c(2, 2), mar=c(0.1, 1.1, 2.1, 0.1), oma=2.5*c(1,1,1,1))
+
+# Generamos los cuatro plots
+etiquetas_2 <- genera_grafico(datos$X, datos$Y, f2, generarRuido = T, cex=0.5, cex.main=0.9,
+                              xlab="", ylab="", xaxt="n",
+                              main=expression(f[2](x,y) == (x-10)^2 + (y-20)^2 - 400))
+
+etiquetas_3 <- genera_grafico(datos$X, datos$Y, f3, generarRuido = T, cex=0.5, cex.main=0.9,
+                              xlab="", ylab="", xaxt="n", yaxt="n",
+                              main=expression(f[3](x,y) == 0.5(x+10)^2 + (y-20)^2 - 400))
+
+etiquetas_4 <- genera_grafico(datos$X, datos$Y, f4, generarRuido = T, cex=0.5, cex.main=0.9,
+                              xlab="", ylab="",
+                              main=expression(f[4](x,y) == 0.5(x-10)^2 - (y+20)^2 - 400))
+
+etiquetas_5 <- genera_grafico(datos$X, datos$Y, f5, generarRuido = T, cex=0.5, cex.main=0.9,
+                              xlab="", ylab="", yaxt="n",
+                              main=expression(f[5](x,y) == y - 20*x^2 - 5*x + 3))
+
+mtext("Etiquetado ruidoso de una muestra con diversas funciones", outer=TRUE, line=0.5)
+
+# Dejamos los parámetros como estaban anteriormente
+par(mfrow=old_mfrow, mar=old_mar, oma=old_oma)
+```
+
+El comentario final del ejercicio 7 se refuerza ahora con estos resultados: al tener muestras con ruido, el etiquetado de estas funciones, con este número tan bajo de muestras, no aporta prácticamente información ninguna. Por ejemplo, en los dos primeros casos, el número de etiquetas dentro de la elipse es prácticamente igual al número de muestras mal etiquetas fuera de ella. Así, el proceso de aprendizaje será complicado. Por otro lado, en el último caso, la única información ---errónea--- que tendremos será la del ruido, ya que el etiquetado de la función que define una región tan pequeña es inútil para el aprendizaje.
 
 # Ajuste del algoritmo Perceptron
 
 ## Ejercicio 1
+La función implementada para el algoritmo Perceptron es la siguiente:
 ```{r PLA}
+# Implementa el algoritmo Perceptron. Devuelve una lista con dos valores:
+# Sol: Recta solución
+# Iter: Número de iteraciones que han sido necesarias
 ajusta_PLA <- function(datos, label, max_iter, vini){
+    # Definimos w como el vector inicial. Si tiene una posición más que
+    # el número de datos, lo dejamos como está; si no, añadimos un 0.
     w <- ifelse(length(vini) == ncol(datos) + 1, vini, c(vini, 0))
+    
+    # Variables usadas en el bucle
     changing <- T
     iteraciones <- 0
     
+    # Añadimos una columna de unos a los datos
     datos <- cbind(datos, 1)
     
+    # Bucle principal, del que salimos si no ha habido cambios tras una
+    # pasada completa a los datos (solución encontrada) o si se ha llegado
+    # al máximo de iteraciones permitidas (solución no encontrada)
     while(changing && iteraciones < max_iter){
         iteraciones <- iteraciones+1
         
         changing <- F
         
+        # Bucle sobre toda la muestra
         for(index in seq(label)){
             dato <- datos[index,]
             etiq <- label[index]
-            
-            # print(w)
-            # print(dato)
-            # print(w %*% dato)
-            # print(sign(w %*% dato))
 
+            # Comportamiento principal: si la muestra está mal etiquetada,
+            # recalcular el hiperplano para etiquetarla bien.
             if(sign(as.vector(w %*% dato)) != etiq) {
                 w <- w + etiq*dato
                 changing <- T
@@ -273,7 +394,8 @@ ajusta_PLA <- function(datos, label, max_iter, vini){
         }
     }
     
-    # Return the Sol (a,b) that determine the line y = ax + b and the iterations
+    # Devolvemos (a,b), coeficientes que determinan la recta y = ax + b y
+    # el número de iteraciones
     list(Sol = -c(w[1], w[3]) / w[2], Iter = iteraciones)
 }
 ```
@@ -295,6 +417,8 @@ colores <- ifelse(datos.etiqueta == 1, "green", "red")
 plot(datos.matriz, asp = 1, col = colores, pch = 20)
 abline(rev(solucion), col="blue")
 ```
+
+El número de iteraciones es `r I(iteraciones)`.
 
 ```{r PLA_random}
 wrapper <- function(vector){
@@ -531,6 +655,12 @@ digitos.regresion <- Regress_Lin(digitos.analisis[, 2], digitos.analisis[, 3])
 colores <- ifelse(digitos.analisis[,1] == 1, "green", "red")
 plot(digitos.analisis[,2:3], col = colores, pch=20)
 abline(rev(digitos.regresion), col="blue")
+
+digitos.clasificacion <- Regress_Lin(digitos.analisis[, 2:3], ifelse(digitos.analisis[, 1] == 1, 1, -1))
+
+plot(digitos.analisis[,2:3], col = colores, pch=20)
+digitos.recta_clas <- -c(digitos.clasificacion[3], digitos.clasificacion[1]) / digitos.clasificacion[2]
+abline(digitos.recta_clas, col="blue")
 ```
 
 ## Ejercicio 7
