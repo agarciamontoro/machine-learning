@@ -3,7 +3,7 @@
 X11()
 
 # Semilla para la generación aleatoria
-set.seed(1992121)
+set.seed(19921201)
 
 # Definimos una función para hacer las pausas entre los ejercicios
 # Tomada de http://stackoverflow.com/a/15272920/3248221
@@ -884,8 +884,9 @@ print(mensaje)
 pausa()
 
 ## ----3.7.c - Medir iteraciones-------------------------------------------
-medir_iter_PLA <- function(muestra){
+medir_iter_PLA <- function(){
     # Generamos etiquetado con f
+    muestra <- generar_muestra(10)
     f.etiquetado <- generar_etiquetado(muestra)
 
     # Estimamos g
@@ -900,14 +901,11 @@ medir_iter_PLA <- function(muestra){
 }
 
 ## ----3.7.c - Analisis----------------------------------------------------
-# Generamos una muestra aleatoria de tamaño 10
-reg.muestra <- generar_muestra(10)
-
 # Definimos el número de repiticiones
 num_rep <- 1000
 
 # Repetimos el experimento num_rep veces y tomamos la media de los valores devueltos
-num_iter <- replicate(num_rep, medir_iter_PLA(reg.muestra))
+num_iter <- replicate(num_rep, medir_iter_PLA())
 num_iter.media <- apply(num_iter, 1, mean)
 
 ## ----3.7.c - Salida---------------------------
