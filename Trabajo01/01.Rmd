@@ -525,7 +525,7 @@ print(mensaje)
 pausa()
 ```
 
-Como vemos, la media es de `r I(media)`, algo menor que en el caso anterior. Así que en este caso y ante estos datos, parece más sensato llamar a esta función con vectores aleatorios.
+Como vemos, la media es de `r I(media)`, mucho mayor que en el caso anterior. Así que en este caso y ante estos datos, parece más sensato llamar a esta función con vector inicial nulo.
 
 ## Ejercicio 3
 
@@ -585,7 +585,7 @@ La ejecución del anterior trozo de código nos da el siguiente resultado:
 * Número de etiquetas diferentes con 100 iteraciones: `r I(analisis[[2]])`
 * Número de etiquetas diferentes con 1000 iteraciones: `r I(analisis[[3]])`
 
-Es claro ante esta salida que un número de iteraciones mayor no implica un número menor de errores. Si los datos no son linealmente separables, el algoritmo PLA está constantemente iterando, pero no se acerca a la mejor solución de forma iterativa. Nada nos asegura que el número de errores sea mejor tras un millón de iteraciones que tras una.
+Ante esta salida no es claro que un número de iteraciones mayor no implique un número menor de errores. Sin embargo, sabemos que si los datos no son linealmente separables, el algoritmo PLA está constantemente iterando, pero no se acerca a la mejor solución de forma iterativa. Nada nos asegura que el número de errores sea mejor tras un millón de iteraciones que tras una. Esta salida es fruto del azar y no podemos extraer ninguna conclusión de ella. En el siguiente apartado, de hecho, veremos cómo con más iteraciones no hay una mejora en el número de muestras mal etiquetadas.
 
 ## Ejercicio 4
 
