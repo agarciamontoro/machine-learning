@@ -35,7 +35,7 @@
     \end{ejercicio}
 
     \begin{solucion}
-        Sea $(x(t), y(t))$ la muestra mal clasificada respecto del modelo PLA. La siguiente iteración nos da un vector de pesos
+        Sea $(x(t), y(t))$, con $y(t) \in \{-1, +1\}$ la muestra mal clasificada respecto del modelo PLA. La siguiente iteración del algoritmo nos dará un vector de pesos
         \[
         w(t+1) = w(t) + y(t)x(t)
         \]
@@ -53,17 +53,17 @@
         Por otro lado, tenemos que
         \begin{align*}
             y(t) w^T(t+1) x(t) &= y(t) (w^T(t) + y(t)x(t)) x(t) = \\
-            &= (y(t)w^T(t) + x(t)) x(t) = \\ \comment{Hemos usado que y(t)^2 = 1}
+            &= (y(t)w^T(t) + x(t)) x(t) = \\
             &= y(t)w^T(t)x(t) + x^2(t) > y(t)w^T(t)x(t)
         \end{align*}
+        donde hemos usado que $y(t)^2 = 1$, ya que $y(t) \in \{-1, +1\}$ y que
 
         Tomando signos, tenemos la siguiente desigualdad:
         \[
-        sign(y(t) w^T(t+1) x(t)) > sign(y(t)w^T(t)x(t)) = y(t) sign(w^T(t) x(t)) = -1
+        sign(y(t) w^T(t+1) x(t)) > sign(y(t)w^T(t)x(t)) = sign(-1) = -1
         \]
 
-        Como la anterior es una desigualdad estricta, podemos concluir que $sign(y(t) w^T(t+1) x(t)) = 1$, luego
-        tenemos que
+        Como la anterior es una desigualdad estricta y, de nuevo, $sign(x) \in \{-1, 1\} \forall x \in \mathbb{R}$, podemos concluir que $sign(y(t) w^T(t+1) x(t)) = 1$, luego necesariamente $y(t)$ y $w^T(t+1) x(t)$ tienen el mismo signo. Como $y(t) = sign(y(t))$, concluimos que
         \[
         y(t) = sign(w^T(t+1) x(t))
         \]
@@ -89,16 +89,64 @@
     \end{ejercicio}
 
     \begin{solucion}
-        Mirar folio
+        Si imponemos que la cota probabilística sea menor o igual que un valor $k$, basta despejar $N$ de la desigualdad
+        \[
+        2 M e^{-2 N^2 \varepsilon} \geq k
+        \]
+        y estudiar lo que se nos pide. Tenemos entonces:
+        \begin{align*}
+            2 M e^{-2 N^2 \varepsilon} &\leq k \\
+            e^{-2 N^2 \varepsilon} &\leq \frac{k}{2M} \\
+            -2 N^2 \varepsilon &\leq ln(\frac{k}{2M}) \\
+            N^2 &\geq \frac{1}{-2\varepsilon} ln(\frac{k}{2M}) \\
+            N &\geq \sqrt{\frac{1}{-2\varepsilon} ln(\frac{k}{2M})}
+        \end{align*}
+
+        Es decir, la cota probabilística será menor o igual que $k$ si y sólo si $N \geq \sqrt{\frac{1}{-2\varepsilon} ln(\frac{k}{2M})}$. Como $N \in \mathbb{N}$, tenemos que el menor $N$ que cumple la condición para un $M$ dado es exactamente
+        \begin{equation}
+            N_M = \left\lceil \sqrt{\frac{1}{-2\varepsilon} ln\left(\frac{k}{2M}\right)} \right\rceil
+            \label{eq}
+        \end{equation}
+        donde $\lceil x \rceil$ es el menor entero mayor o igual que $x$.
+
+        Ahora basta tomar $k = 0.03$, $\varepsilon = 0.05$ y, para $M \in \{1, 10, 100\}$, calcular la expresión obtenida en \ref{eq}, lo que nos da los siguientes valores:
+
+        \begin{align*}
+            N_1 &= 7 \\
+            N_{10} &= 9 \\
+            N_{100} &= 10
+        \end{align*}
     \end{solucion}
 
 
     \begin{ejercicio}
-        Consideremos el modelo de aprendizaje \guillemotleft M-intervalos \guillemotright donde $h \from \mathbb{R} \to \{−1, +1\}$, y $h(x) = +1$ si el punto está dentro de cualquiera de $m$ intervalos arbitrariamente elegidos y −1 en otro caso. ¿Cuál es el más pequeño punto de ruptura para este conjunto de hipótesis?
+        Consideremos el modelo de aprendizaje \guillemotleft M-intervalos \guillemotright donde $h \colon \mathbb{R} \to \{−1, +1\}$, y $h(x) = +1$ si el punto está dentro de cualquiera de $m$ intervalos arbitrariamente elegidos y −1 en otro caso. ¿Cuál es el más pequeño punto de ruptura para este conjunto de hipótesis?
     \end{ejercicio}
 
     \begin{solucion}
-        Es k = 3, lo pone en las transparencias, pero no sé por qué.    
+        Es claro que $M$ intervalos pueden separar cualquier muestra de $2M$ puntos. Imaginemos, por ejemplo, un tal conjunto de tamaño $2M$ en el que las muestras con distintas etiquetas se van alternando:
+        \[
+        +1 \;\;\; -1  \;\;\; +1  \;\;\; -1  \;\;\; \cdots  \;\;\; +1  \;\;\; -1
+        \]
+
+        Evidentemente, hay $M$ puntos etiquetados con $+1$, luego basta con \emph{rodear} esos puntos con los $M$ intervalos de los que disponemos para poder separar completamente la muestra.
+
+        De hecho, esta dicotomía es la más \emph{difícil} de implementar, en el sentido de que necesitamos todos los intervalos disponibles para separarla. Supongamos ahora que intercambiamos dos puntos con etiquetas diferentes de la disposición anterior. En ese caso necesitaríamos sólo $M - 1$ intervalos para implementar la dicotomía. Cualquier otra disposición resulta en un número menor de intervalos necesarios, ya que agrupa puntos con etiquetas iguales bajo un mismo intervalo.
+
+        Concluimos así que $m_{\mathcal{H}}(2M) = 2^{2M}$.
+
+        Para ver que $2M + 1$ es un punto de ruptura basta encontrar una muestra de ese tamaño de manera que $\mathcal{H}$ no sea capaz de conseguir etiquetarla bien.
+
+        Consideramos de nuevo la misma muestra anterior, esta vez de tamaño $2M + 1$, para lo que añadimos un $+1$ al final; es decir, tenemos $M + 1$ puntos etiquetados como $+1$ y una dicotomía como la siguiente:
+        \[
+        +1 \;\;\; -1  \;\;\; +1  \;\;\; -1  \;\;\; \cdots  \;\;\; +1  \;\;\; -1  \;\;\; +1
+        \]
+
+        Si nuestro objetivo es separar la muestra, debemos empezar por la izquierda y, cada vez que encontremos un $+1$, usar un intervalo para etiquetarlo bien. Esto no se puede hacer de otra manera, ya que los $+1$ tienen que estar dentro de un intervalo y los $-1$ fuera. Si seguimos hacia delante, habremos gastado los intervalos al \emph{encerrar} al $M$-ésimo $+1$, luego todo lo que haya a su derecha será etiquetado como $-1$, ya que se queda fuera de un intervalo.
+
+        El último $+1$, por tanto, será etiquetado incorrectamente. Tenemos así una muestra de $2M + 1$ puntos con una dicotomía que $\mathcal{H}$ no puede implementar; es decir, $k = 2M + 1$ es un punto de ruptura.
+
+        Entonces, como $m_{\mathcal{H}}(2M + 1) < 2^{2M}$ y $m_{\mathcal{H}}(2M) = 2^{2M}$, podemos ya afirmar que $k = 2M + 1$ es el más pequeño punto de ruptura para este conjunto de hipótesis.
     \end{solucion}
 
 
@@ -112,6 +160,15 @@
             \item No conocemos nada acerca del punto de ruptura.
         \end{itemize}
     \end{ejercicio}
+
+    \begin{solucion}
+        w
+
+        \begin{itemize}
+            \item Si $\mathcal{H}$ implementa menos de $2^{k^*}$ dicotomías, tenemos que $m_{\mathcal{H}}(k^*) < 2^{k^*}$. Esta es exactamente la definición de punto de ruptura, luego podemos afirmar que $k^*$ lo es.
+            \item No podemos conocer nada acerca de cualquier otro punto de ruptura $k$. Supongamos el caso anterior de $M$ intervalos y consideremos $k^* = 2M + 2$. Hemos probado en el ejercicio anterior que $k = 2M + 1$ es un punto de ruptura, luego existen puntos de ruptura menores o iguales que $k^*$. Pero sabemos que dado $k^*$, cualquier $k > k^*$ es un punto de ruptura ---si $\mathcal{H}$ no puede separar $k^*$ puntos, evidentemente tampoco puede separar $k^* + 1$---, luego existen también puntos de ruptura mayores estrictos que $k^*$.
+        \end{itemize}
+    \end{solucion}
 
 
     \begin{ejercicio}
@@ -144,7 +201,7 @@
     \end{ejercicio}
 
     \begin{ejercicio}
-        Consideremos un escenario de aprendizaje simple. Supongamos que la dimensión de entrada es uno. Supongamos que la variable de entrada $x$ está uniformemente distribuida en el intervalo $[−1, 1]$ y el conjunto de datos consiste en 2 puntos $\{x1, x2\}$ y que la función objetivo es $f(x) = x^2$. Por tanto el conjunto de datos completo es $\mathcal{D} = \{(x_1 , x_1^2), (x_2, x_2^2)\}$. El algoritmo de aprendizaje devuelve la línea que ajusta estos dos puntos como $g$; es decir, \mathcal{H} consiste en funciones de la forma $h(x) = ax + b$.
+        Consideremos un escenario de aprendizaje simple. Supongamos que la dimensión de entrada es uno. Supongamos que la variable de entrada $x$ está uniformemente distribuida en el intervalo $[-1, 1]$ y el conjunto de datos consiste en 2 puntos $\{x_1, x_2\}$ y que la función objetivo es $f(x) = x^2$. Por tanto el conjunto de datos completo es $\mathcal{D} = \{(x_1 , x_1^2), (x_2, x_2^2)\}$. El algoritmo de aprendizaje devuelve la línea que ajusta estos dos puntos como $g$; es decir, $\mathcal{H}$ consiste en funciones de la forma $h(x) = ax + b$.
         \begin{itemize}
             \item Dar una expresión analítica para la función promedio $\bar{g}(x)$.
             \item Calcular analiticamente los valores de $E_{out}$, \emph{bias} y \emph{var}.
