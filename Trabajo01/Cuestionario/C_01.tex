@@ -34,6 +34,42 @@
         Suponga un modelo PLA y un dato $x(t)$ mal clasificado respecto de dicho modelo. Probar que la regla de adaptación de pesos del PLA es un movimiento en la dirección correcta para clasificar bien $x(t)$.
     \end{ejercicio}
 
+    \begin{solucion}
+        Sea $(x(t), y(t))$ la muestra mal clasificada respecto del modelo PLA. La siguiente iteración nos da un vector de pesos
+        \[
+        w(t+1) = w(t) + y(t)x(t)
+        \]
+
+        Como el dato $x(t)$ está mal etiquetado, tenemos que $sign(w^T(t) x(t)) \neq y(t)$, luego podemos concluir que
+        \[
+        y(t) sign(w^T(t) x(t)) < 0
+        \]
+
+        De hecho, como $sign(x) \in \{-1, 1\} \forall x \in \mathbb{R}$, tenemos que
+        \[
+        y(t) sign(w^T(t) x(t)) = -1
+        \]
+
+        Por otro lado, tenemos que
+        \begin{align*}
+            y(t) w^T(t+1) x(t) &= y(t) (w^T(t) + y(t)x(t)) x(t) = \\
+            &= (y(t)w^T(t) + x(t)) x(t) = \\ \comment{Hemos usado que y(t)^2 = 1}
+            &= y(t)w^T(t)x(t) + x^2(t) > y(t)w^T(t)x(t)
+        \end{align*}
+
+        Tomando signos, tenemos la siguiente desigualdad:
+        \[
+        sign(y(t) w^T(t+1) x(t)) > sign(y(t)w^T(t)x(t)) = y(t) sign(w^T(t) x(t)) = -1
+        \]
+
+        Como la anterior es una desigualdad estricta, podemos concluir que $sign(y(t) w^T(t+1) x(t)) = 1$, luego
+        tenemos que
+        \[
+        y(t) = sign(w^T(t+1) x(t))
+        \]
+        es decir, la muestra $(x(t), y(t))$ está ahora bien etiquetada.
+    \end{solucion}
+
 
     \begin{ejercicio}
         Considere el enunciado del ejercicio 2 de la sección FACTIBILIDAD DEL APRENDIZAJE de la relación apoyo.
@@ -52,10 +88,18 @@
         para cualquier $\varepsilon > 0$. Si fijamos $\varepsilon = 0.05$ y queremos que la cota probabilística $2 M e^{-2 N^2 \varepsilon}$ sea como máximo $0.03$, ¿cuál será el valor más pequeño de $N$ que verifique estas condiciones si $M = 1$? Repetir para $M = 10$ y para $M = 100$.
     \end{ejercicio}
 
+    \begin{solucion}
+        Mirar folio
+    \end{solucion}
+
 
     \begin{ejercicio}
         Consideremos el modelo de aprendizaje \guillemotleft M-intervalos \guillemotright donde $h \from \mathbb{R} \to \{−1, +1\}$, y $h(x) = +1$ si el punto está dentro de cualquiera de $m$ intervalos arbitrariamente elegidos y −1 en otro caso. ¿Cuál es el más pequeño punto de ruptura para este conjunto de hipótesis?
     \end{ejercicio}
+
+    \begin{solucion}
+        Es k = 3, lo pone en las transparencias, pero no sé por qué.    
+    \end{solucion}
 
 
     \begin{ejercicio}
