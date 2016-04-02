@@ -23,7 +23,7 @@
 
         Imaginemos ahora que la manera de describir a los animales es a partir de sus cualidades anatómicas. Si tenemos, por ejemplo, una serie de 30 características lógicas ---como puede ser presencia o no de plumas, de pelo, si son o no vivíparos...--- que los describen, los datos de aprendizaje son los siguientes:
         \begin{itemize}
-            \item $\mathcal{X} = \{(x_1, x_2, \dots, x_64) \in \mathbb{Z}_2^30\}$
+            \item $\mathcal{X} = \{(x_1, x_2, \dots, x_{64}) \in \mathbb{Z}_2^{30}\}$
             \item $\mathcal{Y} = \{Pájaro, Mamífero, Reptil, Ave, Anfibio\}$
         \end{itemize}
 
@@ -34,7 +34,7 @@
         Imaginemos que tenemos imágenes escaneadas de dígitos manuscritos, de manera que después de tratarlas y procesarlas, se reducen s matrices 8x8 ---o vectores de longitud 64--- en las que cada entrada almacena la intensidad del trazo en ese punto, numerada de 0 a 255.
         Los datos de aprendizaje que debemos usar son entonces los siguientes:
         \begin{itemize}
-            \item $\mathcal{X} = \{(x_1, x_2, \dots, x_64) \in \mathbb{Z}_256^64\}$
+            \item $\mathcal{X} = \{(x_1, x_2, \dots, x_64) \in \mathbb{Z}_{256}^{64}\}$
             \item $\mathcal{Y} = \{0, 1, 2, 3, 4, 5, 6, 7, 8, 9\}$
         \end{itemize}
 
@@ -46,8 +46,8 @@
 
         Si la situación del índice se puede describir con un número real, la predicción que se hace es otro número real y alimentamos el algoritmo con lo que pasó en los últimos 60 días, los datos de aprendizaje serán los siguientes:
         \begin{itemize}
-            \item $\mathcal{X} = \{(x_1, x_2, \dots, x_30, z) \in \mathbb{R}^30 \times \mathbb{R}\}$
-            \item $\mathcal{Y} = [0,1] \texrm{, donde este número indica el valor de éxito de la predicción.}$
+            \item $\mathcal{X} = \{(x_1, x_2, \dots, x_30, z) \in \mathbb{R}^{30} \times \mathbb{R}\}$
+            \item $\mathcal{Y} = [0,1] \textrm{, donde este número indica el valor de éxito de la predicción.}$
         \end{itemize}
     \end{solucion}
 
@@ -70,15 +70,57 @@
 
         \emph{Determinar los ingresos medios de una persona a partir de sus datos de nivel de educación, edad, experiencia y estatus social.}
 
-        Este caso, sin embargo, es más gi
+        Este caso, sin embargo, es más adecuado para una aproximación por aprendizaje. No existe una expresión analítica que nos diga, dados los datos de educación, edad, experiencia y estatus social, los ingresos medios de una persona. Sin embargo, es evidente que entre estas variables existe una relación.
+
+        Estamos ante un problema que requiere claramente de una aproximación por aprendizaje, en la que tendremos que tomar una muestra lo suficientemente amplia de personas, analizar sus datos e intentar aprender la relación que existe entre ellos.
 
         \emph{Determinar si se debe aplicar una campaña de vacunación contra una enfermedad.}
-        Niputaidea
+        Las enfermedades son diversas y tienen comportamientos muy inestables. Aunque quizás existan parámetros analíticos para intentar una aproximación por diseño, en este caso parece más sensato también intentar abordar el problema mediante aprendizaje.
+
+        Podríamos estudiar todos los casos documentados de enfermedades, analizar sus atributos, determinar si se aplicó o  no una campaña de vacunación y cómo de exitosa fue la decisión. De esta manera, podríamos intentar aprender qué hacer ante la nueva enfermedad intentando aprender una relación entre sus atributos y los de enfermedades ya tratadas.
     \end{solucion}
 
     \begin{ejercicio}
-        Construir un problema de aprendizaje desde datos para un problema de selección de fruta en una explotación agraria (ver transparencias de clase). Identificar y describir cada uno de sus elementos formales. Justificar las decisiones.
+        Construir un problema de aprendizaje desde datos para un problema de selección de fruta en una explotación agraria ---ver transparencias de clase---. Identificar y describir cada uno de sus elementos formales. Justificar las decisiones.
     \end{ejercicio}
+
+    \begin{solucion}
+        En este ejercicio tenemos que identificar $\mathcal{X}$, el conjunto de características medidas; $\mathcal{Y}$, el conjunto de etiquetas que podemos asignar a cada muestra; $\matcahl{D}$, el conjunto de muestras de entrenamiento y $f$, la función objetivo.
+
+        En el problema queremos seleccionar qué fruta está en su punto óptimo de madurez y cuál no ---ya que queremos escoger el producto que mejor salida tenga en el mercado después---. Si codificamos \emph{maduro} como +1 y \emph{no maduro} como -1, el conjunto de etiquetas será el siguiente:
+        \[
+        \mathcal{Y} = \{+1, -1\}
+        \]
+
+        Imaginemos ahora que el experto nos ha informado de que las siguientes características físicas son las que determinan la madurez de una pieza de fruta en concreto:
+        \begin{itemize}
+            \item Tamaño.
+            \item Color.
+        \end{itemize}
+
+        Estas características las mediremos de la siguiente forma:
+        \begin{itemize}
+            \item El tamaño lo mediremos de forma continua, luego se mueve en $\mathbb{R}^+$
+            \item El color lo mediremos con imágenes de las piezas de fruta, analizando después la media de los píxeles pertenecientes a la fruta en una escala de 256 valores en cada uno de los tres canales de color usuales: rojo, verde y azul. Por tanto, esta medida se mueve en $\mathbb{Z}_{256}^3$.
+        \end{itemize}
+
+        Así, concluimos que el conjunto de características es el siguiente:
+        \[
+        \mathcal{X} = \mathbb{R}^+ \times \mathbb{Z}_{256}^3
+        \]
+
+        Si en nuestra visita a  la huerta tomamos 100 muestras de mangos, medimos su tamaño y color y analizamos, con ayuda del experto, si están o no maduros, nuestro conjunto de entrenamiento será de la siguiente forma:
+        \[
+        \mathcal{D} = \{(x_i, y_i) \; i = 1, 2, \dots, 100 \;/ x_i \in \mathcal{X}, y_i\in\mathcal{Y} \}
+        \]
+
+        La finalidad del aprendizaje será encontrar la función objetivo, fjia pero desconocida, siguiente:
+        \[
+        f \colon \mathcal{X} \to \mathcal{Y}
+        \]
+
+        Tenemos así todos los elementos formales del aprendizaje. Para desarrollar el modelo completo, tendremos que seleccionar $\mathcal{H}$, el conjunto de hipótesis ---esto deberíamos hacerlo antes de conocer las muestras--- y $\mathcal{A}$, el algoritmo de aprendizaje.
+    \end{solucion}
 
     \begin{ejercicio}
         Suponga un modelo PLA y un dato $x(t)$ mal clasificado respecto de dicho modelo. Probar que la regla de adaptación de pesos del PLA es un movimiento en la dirección correcta para clasificar bien $x(t)$.
@@ -109,7 +151,7 @@
         \end{align*}
         donde hemos usado que $y(t)^2 = 1$, pues $y(t) \in \{-1, +1\}$ y que $x^2(t) > 0$.
 
-        Hemos probado así que la regla del PLA permite acercarse a la correcta etiquetación de la muestra.
+        Hemos probado así que la regla del PLA permite acercarse al correcto etiquetado de la muestra.
     \end{solucion}
 
 
@@ -121,6 +163,57 @@
         \end{itemize}
     \end{ejercicio}
 
+    \begin{solucion}
+        \emph{Si $p = 0.9$, ¿cuál es la probabilidad de que S produzca una hipótesis mejor que C?}
+
+        En el ejercicio citado se intenta aprender la función
+        \[
+            f \colon \mathcal{X} = \mathbb{R} \to \mathcal{Y} = \{-1, +1\}
+        \]
+        con un conjunto de hipótesis $\mathcal{H} = \{h_1 \equiv +1, h_2 \equiv -1 \}$. El algoritmo S elige la hipótesis que mejor ajusta los datos y el C justo la contraria. Además, se asume que todos los ejemplos en $\mathcal{D}$ tienen $y_n = +1$.
+
+        Supuesto en este ejercicio que $p = P[f(x) = +1] = 0.9$, podemos estudiar cuáles es la probabilidad de que S produzca una hipótesis mejor que C estudiando la siguiente probabilidad:
+        \[
+            P[E_{out}^S < E_{out}^C]
+        \]
+        donde $E_{out}^S$ indica el error fuera de la muestra de la hipótesis producida por S y $E_{out}^C$ el error fuera de la muestra de la hipótesis producida por C.
+
+        Estos errores fuera de la muestra se corresponden con la probabilidad de que la hipótesis producida \emph{no} sea la función objetivo $f$; es decir, tenemos la siguiente expresión:
+        \[
+            P[E_{out}^S < E_{out}^C] = P[ P[f \neq h_S] < P[f \neq h_C] ]
+        \]
+        donde $h_S$ es la hipótesis producida por $S$ y $h_C$ la producida por $C$.
+
+        Como por hipótesis todas las muestras en $\mathcal{D}$ están etiquetadas como +1, $S$ elegirá la función $h_1$ y $C$ la $h_2$. Por tanto, la expresión anterior se puede escribir como:
+        \[
+            P[E_{out}^S < E_{out}^C] = P[ P[f \neq +1] < P[f \neq -1] ]
+        \]
+
+        Pero por hipótesis sabemos que $P[f(x) = +1] = p = 0.9$. Por tanto, tenemos que $P[f(x) \neq +1] = 1 - p = 0.1$ y $P[f(x) \neq -1] = P[f(x) = +1] = p = 0.9$. Hemos reducido nuestra expresión a lo siguiente, que ya podemos calcular:
+        \begin{equation}
+            P[E_{out}^S < E_{out}^C] = P[1-p < p] = P[ 0.1 < 0.9 ] = 1
+            \label{eq:prob}
+        \end{equation}
+        ya que $0.1$ es siempre menor estricto que $0.9$.
+
+        Hemos probado entonces que si $p = 0.9$, es seguro que S producirá una hipótesis mejor que C.
+
+        \emph{¿Existe un valor de $p$ para el cual es más probable que C produzca una hipótesis mejor que S?}
+
+        Siguiendo el mismo razonamiento, llegamos a la expresión \ref{eq:prob}. Sin embargo, como queremos ver cuándo es más probable que C produzca una hipótesis mejor que S, tenemos que darle la vuelta a la desigualdad. Nuestro problema se reduce entonces a determinar el $p$ de manera que
+        \[
+        P[E_{out}^S > E_{out}^C] = P[1-p > p]
+        \]
+        Operando con la desigualdad $1-p > p$ tenemos
+        \begin{align*}
+            1 - p &> p \\
+            1  &> 2p \\
+            p &< \frac{1}{2}
+        \end{align*}
+
+        Podemos concluir entonces que es más pobable que C produza una hipótesis mejor que S si y sólo si $p < 0.5$.
+    \end{solucion}
+
 
     \begin{ejercicio}
         La desigualdad de Hoeffding modificada nos da una forma de caracterizar el error de generalización con una cota probabilística
@@ -131,9 +224,9 @@
     \end{ejercicio}
 
     \begin{solucion}
-        Si imponemos que la cota probabilística sea menor o igual que un valor $k$, basta despejar $N$ de la desigualdad
+            wSi imponemos que la cota probabilística sea menor o igual que un valor $k$, basta despejar $N$ de la desigualdad
         \[
-        2 M e^{-2 N^2 \varepsilon} \geq k
+        2 M e^{-2 N \varepsilon^2} \geq k
         \]
         y estudiar lo que se nos pide. Tenemos entonces:
         \begin{align*}
@@ -250,13 +343,75 @@
         Para un conjunto $\mathcal{H}$ con $d_{VC} = 10$, ¿qué tamaño muestral se necesita ---según la cota de generalización--- para tener un 95\% de confianza de que el error de generalización sea como mucho $0.05$?
     \end{ejercicio}
 
+    \begin{solucion}
+        La cota de generalización nos dice que, para tener una confianza del $1-\delta$ de que el error de generalización sea como mucho $\varepsilon$, tenemos que tomar un número de muestras $N$ tal que cumpla la siguiente desigualdad:
+        \[
+        N \geq \frac{8}{\varepsilon^2} ln(\frac{4 (2N)^{d_{VC}} + 4}{\delta})
+        \]
+        Una forma poco elegante, pero rápida de implementar en este caso, de conseguir tal número es iterando sobre $N$ y comprobar si la desigualdad se satisface. El siguiente script en Python nos es suficiente para determinar el menor $N$ necesario para tener un 95\% de confianza ---como $1-\delta = 0.95$, entonces $\delta = 0.05$--- de que el error de generalización sea como mucho $\varepsilon = 0.05$:
+
+        \begin{lstlisting}
+        from math import log
+
+        # Define las constantes del ejercicio
+        eps = 0.05
+        delta = 0.05
+        dVC = 10
+
+        # Iteramos desde 1 hasta 500.000
+        for N in range(1, 500000):
+            rhs = (8 / eps**2) * log((4*(2*N)**dVC + 4) / delta)
+
+        if(N >= rhs):
+            # Si se cumple la desigualdad, imprime N y sal del bucle
+            print(N)
+            break
+        \end{lstlisting}
+
+        Así, obtenemos que el número de muestras tiene que ser mayor o igual que 452957.
+    \end{solucion}
+
     \begin{ejercicio}
         Consideremos un escenario de aprendizaje simple. Supongamos que la dimensión de entrada es uno. Supongamos que la variable de entrada $x$ está uniformemente distribuida en el intervalo $[-1, 1]$ y el conjunto de datos consiste en 2 puntos $\{x_1, x_2\}$ y que la función objetivo es $f(x) = x^2$. Por tanto el conjunto de datos completo es $\mathcal{D} = \{(x_1 , x_1^2), (x_2, x_2^2)\}$. El algoritmo de aprendizaje devuelve la línea que ajusta estos dos puntos como $g$; es decir, $\mathcal{H}$ consiste en funciones de la forma $h(x) = ax + b$.
         \begin{itemize}
             \item Dar una expresión analítica para la función promedio $\bar{g}(x)$.
-            \item Calcular analiticamente los valores de $E_{out}$, \emph{bias} y \emph{var}.
+            \item Calcular analíticamente los valores de $E_{out}$, \emph{bias} y \emph{var}.
         \end{itemize}
     \end{ejercicio}
+
+    \begin{solucion}
+        \emph{Dar una expresión analítica para la función promedio $\bar{g}(x)$.}
+
+        La función promedio se puede calcular como sigue:
+        \[
+        \bar{g}(x) = \mathbb{E}_{\mathcal{D}_n}[g^{\mathcal{D}_n}(x)] \approx \frac{1}{K} \sum_{n=1}^K g^{\mathcal{D}_n}(x)
+        \]
+        donde $g^{\mathcal{D}_n}(x)$ es la función que devuelve el algoritmo respecto del n-ésimo conjunto de datos $\mathcal{D}_n$.
+
+        Llamando $\mathcal{D}_n =\{(a_n, a_n^2), (b_n, b_n^2)\}$, sabemos la expresión explícita de $g^{\mathcal{D}_n}(x)$, ya que no es más que la recta :
+        \[
+        g^{\mathcal{D}_n}(x) = m_n x + c_n
+        \]
+        donde $m_n$ es la pendiente de la recta y $c_n$ el punto de corte con el eje vertical; es decir:
+        \begin{align*}
+            m_n &= \frac{b_n^2 - a_n^2}{b_n - a_n} \\
+            c_n &= a_n^2 - \frac{a_n (b_n^2-a_n^2)}{b_n - a_n}
+        \end{align*}
+
+        Tenemos entonces la siguiente expresión de la función promedio:
+        \[
+        \bar{g}(x) \approx \frac{1}{K} \sum_{n=1}^K (m_n x + c_n) = \frac{1}{K} \left( \sum_{n=1}^K m_n \right) x  +  \frac{1}{K} \sum_{n=1}^K c_n
+        \]
+
+        Esto es, la función promedio es aproximadamente la recta cuya pendiente es la media de las pendientes entre cada par de puntos generados y cuyo corte con el eje vertical es la media de los cortes con el eje vertical de las rectas generadas para cada par de puntos.
+
+        El \emph{aproximadamente} lo podemos eliminar, y por tanto tener una igualdad, si consideramos todos los conjuntos $\mathcal{D}_n$ posibles. Como los datos están uniformemente distribuidos en $[-1, 1]$, tanto la media de las pendientes como la media de los puntos de corte será 0 ---ya que la media de una muestra uniforme en $[-1,1]$ y las operaciones en $m_n$ y $c_n$ no alteran la media---.
+
+        Podemos concluir entonces que
+        \[
+        \bar{g}(x) = 0x + 0 = 0 \;\;\;\; \forall x
+        \]
+    \end{solucion}
 
 
     \section{Bonus}
