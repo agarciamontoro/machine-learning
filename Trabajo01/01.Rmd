@@ -428,7 +428,10 @@ ajusta_PLA <- function(datos, label, max_iter, vini){
             # Comportamiento principal: si la muestra está mal etiquetada,
             # recalcular el hiperplano para etiquetarla bien.
             if(sign(sum(w * dato)) != etiq) {
+                print(sign(sum(w * dato)) != etiq)
                 w <- w + etiq*dato
+                print(sign(sum(w * dato)) != etiq)
+                print("...........................")
                 changing <- T
             }
         }

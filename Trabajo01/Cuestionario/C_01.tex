@@ -10,11 +10,19 @@
     \begin{ejercicio}
         Identificar, para cada una de las siguientes tareas, qué tipo de aprendizaje es el adecuado (supervisado, no supervisado, por refuerzo) y los datos de aprendizaje que deberíamos usar. Si una tarea se ajusta a más de un tipo, explicar cómo y describir los datos para cada tipo.
         \begin{itemize}
-            \item Categorizar un grupo de animales vertebrados en pajaros, mamíferos, reptiles, aves y anfibios.
+            \item Categorizar un grupo de animales vertebrados en pájaros, mamíferos, reptiles, aves y anfibios.
             \item Clasificación automática de cartas por distrito postal.
             \item Decidir si un determinado índice del mercado de valores subirá o bajará dentro de un periodo de tiempo fijado.
         \end{itemize}
     \end{ejercicio}
+
+    \begin{solucion}
+        Supervisado.
+
+        Supervisado.
+
+        Refuerzo.
+    \end{solucion}
 
 
     \begin{ejercicio}
@@ -26,6 +34,14 @@
         \end{itemize}
     \end{ejercicio}
 
+    \begin{solucion}
+        Diseño
+
+        Aprendizaje
+
+        Aprendizaje
+    \end{solucion}
+
     \begin{ejercicio}
         Construir un problema de aprendizaje desde datos para un problema de selección de fruta en una explotación agraria (ver transparencias de clase). Identificar y describir cada uno de sus elementos formales. Justificar las decisiones.
     \end{ejercicio}
@@ -34,40 +50,32 @@
         Suponga un modelo PLA y un dato $x(t)$ mal clasificado respecto de dicho modelo. Probar que la regla de adaptación de pesos del PLA es un movimiento en la dirección correcta para clasificar bien $x(t)$.
     \end{ejercicio}
 
-    \begin{solucion}
-        Sea $(x(t), y(t))$, con $y(t) \in \{-1, +1\}$ la muestra mal clasificada respecto del modelo PLA. La siguiente iteración del algoritmo nos dará un vector de pesos
-        \[
-        w(t+1) = w(t) + y(t)x(t)
-        \]
+    \begin{solucion}\footnote{Ejercicio resuelto con la ayuda de los pasos explicados en el Ejercicio 1.3 de \cite{mostafa2012learning}.}
 
-        Como el dato $x(t)$ está mal etiquetado, tenemos que $sign(w^T(t) x(t)) \neq y(t)$, luego podemos concluir que
+        Sea $(x(t), y(t))$, con $y(t) \in \{-1, +1\}$ la muestra mal clasificada respecto del modelo PLA; esto es, $sign(w^T(t) x(t)) \neq y(t)$ o, dicho de otra manera
         \[
         y(t) sign(w^T(t) x(t)) < 0
         \]
 
-        De hecho, como $sign(x) \in \{-1, 1\} \forall x \in \mathbb{R}$, tenemos que
+        Probar que la regla de adaptación de pesos del PLA es un movimiento en la dirección correcta para clasificar bien $x(t)$ consiste en determinar que la siguiente iteración del algoritmo estará más cerca de clasificar bien la muestra; esto es, tenemos que probar lo siguiente:
+        \begin{equation}
+            y(t) sign(w^T(t+1) x(t)) > y(t) sign(w^T(t) x(t))
+            \label{eq:PLA}
+        \end{equation}
+        donde $w^T(t+1)$ es el vector de pesos que nos da la siguiente iteración del algoritmo, y que viene determinado como
         \[
-        y(t) sign(w^T(t) x(t)) = -1
+        w(t+1) = w(t) + y(t)x(t)
         \]
 
-        Por otro lado, tenemos que
+        Para probar la desigualdad \ref{eq:PLA} basta trabajar con la parte izquierda y la definición de $w^T(t+1)$ de la siguiente manera:
         \begin{align*}
             y(t) w^T(t+1) x(t) &= y(t) (w^T(t) + y(t)x(t)) x(t) = \\
             &= (y(t)w^T(t) + x(t)) x(t) = \\
             &= y(t)w^T(t)x(t) + x^2(t) > y(t)w^T(t)x(t)
         \end{align*}
-        donde hemos usado que $y(t)^2 = 1$, ya que $y(t) \in \{-1, +1\}$ y que
+        donde hemos usado que $y(t)^2 = 1$, pues $y(t) \in \{-1, +1\}$ y que $x^2(t) > 0$.
 
-        Tomando signos, tenemos la siguiente desigualdad:
-        \[
-        sign(y(t) w^T(t+1) x(t)) > sign(y(t)w^T(t)x(t)) = sign(-1) = -1
-        \]
-
-        Como la anterior es una desigualdad estricta y, de nuevo, $sign(x) \in \{-1, 1\} \forall x \in \mathbb{R}$, podemos concluir que $sign(y(t) w^T(t+1) x(t)) = 1$, luego necesariamente $y(t)$ y $w^T(t+1) x(t)$ tienen el mismo signo. Como $y(t) = sign(y(t))$, concluimos que
-        \[
-        y(t) = sign(w^T(t+1) x(t))
-        \]
-        es decir, la muestra $(x(t), y(t))$ está ahora bien etiquetada.
+        Hemos probado así que la regla del PLA permite acercarse a la correcta etiquetación de la muestra.
     \end{solucion}
 
 
@@ -95,16 +103,15 @@
         \]
         y estudiar lo que se nos pide. Tenemos entonces:
         \begin{align*}
-            2 M e^{-2 N^2 \varepsilon} &\leq k \\
-            e^{-2 N^2 \varepsilon} &\leq \frac{k}{2M} \\
-            -2 N^2 \varepsilon &\leq ln(\frac{k}{2M}) \\
-            N^2 &\geq \frac{1}{-2\varepsilon} ln(\frac{k}{2M}) \\
-            N &\geq \sqrt{\frac{1}{-2\varepsilon} ln(\frac{k}{2M})}
+            2 M e^{-2 N \varepsilon^2} &\leq k \\
+            e^{-2 N \varepsilon^2} &\leq \frac{k}{2M} \\
+            -2 N \varepsilon^2 &\leq ln(\frac{k}{2M}) \\
+            N &\geq \frac{1}{-2\varepsilon^2} ln(\frac{k}{2M})
         \end{align*}
 
         Es decir, la cota probabilística será menor o igual que $k$ si y sólo si $N \geq \sqrt{\frac{1}{-2\varepsilon} ln(\frac{k}{2M})}$. Como $N \in \mathbb{N}$, tenemos que el menor $N$ que cumple la condición para un $M$ dado es exactamente
         \begin{equation}
-            N_M = \left\lceil \sqrt{\frac{1}{-2\varepsilon} ln\left(\frac{k}{2M}\right)} \right\rceil
+            N_M = \left\lceil \frac{1}{-2\varepsilon^2} ln\left(\frac{k}{2M}\right) \right\rceil
             \label{eq}
         \end{equation}
         donde $\lceil x \rceil$ es el menor entero mayor o igual que $x$.
@@ -112,15 +119,15 @@
         Ahora basta tomar $k = 0.03$, $\varepsilon = 0.05$ y, para $M \in \{1, 10, 100\}$, calcular la expresión obtenida en \ref{eq}, lo que nos da los siguientes valores:
 
         \begin{align*}
-            N_1 &= 7 \\
-            N_{10} &= 9 \\
-            N_{100} &= 10
+            N_1 &= 840 \\
+            N_{10} &= 1301 \\
+            N_{100} &= 1761
         \end{align*}
     \end{solucion}
 
 
     \begin{ejercicio}
-        Consideremos el modelo de aprendizaje \guillemotleft M-intervalos \guillemotright donde $h \colon \mathbb{R} \to \{−1, +1\}$, y $h(x) = +1$ si el punto está dentro de cualquiera de $m$ intervalos arbitrariamente elegidos y −1 en otro caso. ¿Cuál es el más pequeño punto de ruptura para este conjunto de hipótesis?
+        Consideremos el modelo de aprendizaje \guillemotleft M-intervalos \guillemotright donde $h \colon \mathbb{R} \to \{−1, +1\}$, y $h(x) = +1$ si el punto está dentro de cualquiera de $M$ intervalos arbitrariamente elegidos y −1 en otro caso. ¿Cuál es el más pequeño punto de ruptura para este conjunto de hipótesis?
     \end{ejercicio}
 
     \begin{solucion}
@@ -135,16 +142,18 @@
 
         Concluimos así que $m_{\mathcal{H}}(2M) = 2^{2M}$.
 
-        Para ver que $2M + 1$ es un punto de ruptura basta encontrar una muestra de ese tamaño de manera que $\mathcal{H}$ no sea capaz de conseguir etiquetarla bien.
+        Para ver que $2M + 1$ es un punto de ruptura basta probar que no hay ninguna muestra de ese tamaño de manera que $\mathcal{H}$ sea capaz de separar por completo.
 
         Consideramos de nuevo la misma muestra anterior, esta vez de tamaño $2M + 1$, para lo que añadimos un $+1$ al final; es decir, tenemos $M + 1$ puntos etiquetados como $+1$ y una dicotomía como la siguiente:
         \[
         +1 \;\;\; -1  \;\;\; +1  \;\;\; -1  \;\;\; \cdots  \;\;\; +1  \;\;\; -1  \;\;\; +1
         \]
 
-        Si nuestro objetivo es separar la muestra, debemos empezar por la izquierda y, cada vez que encontremos un $+1$, usar un intervalo para etiquetarlo bien. Esto no se puede hacer de otra manera, ya que los $+1$ tienen que estar dentro de un intervalo y los $-1$ fuera. Si seguimos hacia delante, habremos gastado los intervalos al \emph{encerrar} al $M$-ésimo $+1$, luego todo lo que haya a su derecha será etiquetado como $-1$, ya que se queda fuera de un intervalo.
+        Si nuestro objetivo es implementar con $\mathcal{H}$ la muestra, debemos empezar por la izquierda y, cada vez que encontremos un $+1$, usar un intervalo para etiquetarlo bien. Esto no se puede hacer de otra manera, ya que los $+1$ tienen que estar dentro de un intervalo y los $-1$ fuera. Si seguimos hacia delante, habremos gastado los intervalos al \emph{encerrar} al $M$-ésimo $+1$, luego todo lo que haya a su derecha será etiquetado como $-1$, ya que se queda fuera de un intervalo. El último $+1$, por tanto, será etiquetado incorrectamente.
 
-        El último $+1$, por tanto, será etiquetado incorrectamente. Tenemos así una muestra de $2M + 1$ puntos con una dicotomía que $\mathcal{H}$ no puede implementar; es decir, $k = 2M + 1$ es un punto de ruptura.
+        Podríamos pensar que esto prueba que existe una única muestra que $\mathcal{H}$ no puede separar. Sin embargo, cualquier muestra de $2M + 1$ puntos en la recta real es de la forma descrita, y en todas y cada una de ellas existe al menos esta dicotomía que $\mathcal{H}$ no puede implementar.
+
+         Tenemos así que cualquier muestra de $2M + 1$ puntos tiene al menos una dicotomía que $\mathcal{H}$ no puede implementar; es decir, $k = 2M + 1$ es un punto de ruptura.
 
         Entonces, como $m_{\mathcal{H}}(2M + 1) < 2^{2M}$ y $m_{\mathcal{H}}(2M) = 2^{2M}$, podemos ya afirmar que $k = 2M + 1$ es el más pequeño punto de ruptura para este conjunto de hipótesis.
     \end{solucion}
@@ -162,12 +171,7 @@
     \end{ejercicio}
 
     \begin{solucion}
-        w
-
-        \begin{itemize}
-            \item Si $\mathcal{H}$ implementa menos de $2^{k^*}$ dicotomías, tenemos que $m_{\mathcal{H}}(k^*) < 2^{k^*}$. Esta es exactamente la definición de punto de ruptura, luego podemos afirmar que $k^*$ lo es.
-            \item No podemos conocer nada acerca de cualquier otro punto de ruptura $k$. Supongamos el caso anterior de $M$ intervalos y consideremos $k^* = 2M + 2$. Hemos probado en el ejercicio anterior que $k = 2M + 1$ es un punto de ruptura, luego existen puntos de ruptura menores o iguales que $k^*$. Pero sabemos que dado $k^*$, cualquier $k > k^*$ es un punto de ruptura ---si $\mathcal{H}$ no puede separar $k^*$ puntos, evidentemente tampoco puede separar $k^* + 1$---, luego existen también puntos de ruptura mayores estrictos que $k^*$.
-        \end{itemize}
+        En este caso no conocemos nada acerca del punto de ruptura. Por definición, $k$ es un punto de ruptura si $m_\mathcal{H}(k) < 2^k$. Esto no quiere decir que \emph{exista} una muestra de $k$ puntos para la que $H$ no sea capaz de implementar todas las dicotomías; sino que $\mathcal{H}$ es incapaz de implementar todas las dicotomías \emph{para todas} las muestras de $k$ puntos.
     \end{solucion}
 
 
@@ -182,6 +186,14 @@
         \end{itemize}
     \end{ejercicio}
 
+    \begin{solucion}
+        En este caso ya sí podemos afirmar, usando el mismo argumento que en el ejercicio anterior, que $k^*$ es un punto de ruptura.
+
+        Por otro lado, es evidente que si $k^*$ es un punto de ruptura, $k \geq k^*$ también lo es. Esto es claro: si $\mathcal{H}$ es incapaz de separar una muestra de $k^*$ puntos, añadir puntos a la muestra no hará sino hacerla más compleja, luego $\mathcal{H}$ seguirá siendo incapaz de separarla.
+
+        Por último, poco podemos decir sobre los $k < k^*$. Pueden ser puntos de ruptura, si se da el caso de que $k^*$ no sea el más pequeño punto de ruptura ---basta usar el mismo argumento que en el párrafo anterior---, o pueden no serlo, como en el caso sencillo del perceptron en el plano, donde sabemos que $k^* = 4$ es un punto de ruptura y $k = 3 < k^*$ no lo es.
+    \end{solucion}
+
 
 
     \begin{ejercicio}
@@ -194,6 +206,10 @@
             \item Mostrar que $m_\mathcal{H} (k) = 2^{k^*}$
         \end{itemize}
     \end{ejercicio}
+
+    \begin{solucion}
+        Por definición, $k^*$ es un punto de ruptura si $m_\mathcal{H}(k^*) < 2^{k^*}$. Como la función de crecimiento está definida en términos del máximo número de dicotomías que $H$ puede implementar, podemos concluir que para probar que $k^*$ es un punto de ruptura hay que mostrar que $\mathcal{H}$ no puede separar \emph{ningún} conjunto de $k^*$ puntos.
+    \end{solucion}
 
 
     \begin{ejercicio}
@@ -232,5 +248,11 @@
             \item Ejecutar el experimento y dar los resultados. Comparar $E_{out}$ con $bias+var$. Dibujar en unos mismos ejes $\bar{g}(x)$, $E_{out}$ y $f(x)$.
         \end{itemize}
     \end{bonus}
+
+    \nocite{*}
+
+% -------------------------- Bibliografía ------------------------
+\bibliographystyle{babplain}
+\bibliography{C_01}
 
 \end{document}
