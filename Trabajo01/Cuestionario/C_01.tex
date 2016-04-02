@@ -17,11 +17,38 @@
     \end{ejercicio}
 
     \begin{solucion}
-        Supervisado.
+        \emph{Categorizar un grupo de animales vertebrados en pájaros, mamíferos, reptiles, aves y anfibios.}
 
-        Supervisado.
+        La categorización automática de un grupo de animales vertebrados en sus diferentes clases puede abordarse como un problema de aprendizaje supervisado. Si tenemos una manera de describir un animal, ya sea con una imagen o, por ejemplo, una descripción cuantitativa de sus cualidades anatómicas, necesitaremos una muestra previamente clasificada para poder entrenar nuestro algoritmo de aprendizaje. Abordar este problema con aprendizaje no supervisado no tendría sentido, ya que tenemos una forma clara ---aunque no definida analíticamente, si así fuera sería más sensato resolver este problema mediante diseño--- de diferenciar entre clases; no usar esa información es perder oportunidades. Por último, el aprendizaje por refuerzo no tiene sentido en este caso; no hay definida una estructura de actión y recompensa.
 
-        Refuerzo.
+        Imaginemos ahora que la manera de describir a los animales es a partir de sus cualidades anatómicas. Si tenemos, por ejemplo, una serie de 30 características lógicas ---como puede ser presencia o no de plumas, de pelo, si son o no vivíparos...--- que los describen, los datos de aprendizaje son los siguientes:
+        \begin{itemize}
+            \item $\mathcal{X} = \{(x_1, x_2, \dots, x_64) \in \mathbb{Z}_2^30\}$
+            \item $\mathcal{Y} = \{Pájaro, Mamífero, Reptil, Ave, Anfibio\}$
+        \end{itemize}
+
+        \emph{Clasificación automática de cartas por distrito postal.}
+
+        Para clasificar automáticamente cartas por distrito postal basta leer el código postal escrito en el sobre; esto, evidentemente, se reduce a comprender cada uno de los dígitos escritos.  Estos números suelen estar manuscritos, así que la diversidad de escrituras, tintas y papeles nos impiden intentar abordar este problema por diseño ---no conocemos una regla exacta para asignar trazos manuscritos (que pueden tener formas diversas) a su correspondiente dígito---. Además, podemos tomar una gran muestra de dígitos manuscritos, clasificarlos a mano y usar esta información para intentar aprender bajo qué regla se asigna un trazo a un dígito concreto. Este caso es, por tanto, un claro ejemplo de aprendizaje supervisado con clasificación multi-etiqueta.
+
+        Imaginemos que tenemos imágenes escaneadas de dígitos manuscritos, de manera que después de tratarlas y procesarlas, se reducen s matrices 8x8 ---o vectores de longitud 64--- en las que cada entrada almacena la intensidad del trazo en ese punto, numerada de 0 a 255.
+        Los datos de aprendizaje que debemos usar son entonces los siguientes:
+        \begin{itemize}
+            \item $\mathcal{X} = \{(x_1, x_2, \dots, x_64) \in \mathbb{Z}_256^64\}$
+            \item $\mathcal{Y} = \{0, 1, 2, 3, 4, 5, 6, 7, 8, 9\}$
+        \end{itemize}
+
+        \emph{Decidir si un determinado índice del mercado de valores subirá o bajará dentro de un periodo de tiempo fijado.}
+
+        Este problema puede ser abordado con aprendizaje por refuerzo. La situación del mercado de valores puede no valer de un año a otro debido a la inestabilidad de las situaciones políticas, económicas y sociales, así que no es fácil generar una muestra de aprendizaje supervisado en la que conozcamos las etiquetas correctas para cada predicción.
+
+        Sin embargo, sí podemos recolectar predicciones anteriores, su nivel de éxito ---cómo de cerca estuvieron de la posterior realidad--- y generar una muestra de la forma (situación, predicción, nivel de éxito de la predicción), de manera que el algoritmo aprenda cómo de buena o mala ---no exactamente si es la mejor--- es una predicción. Además, esta estructura nos permitirá realimentar el algoritmo con el éxito de las predicciones que haga una vez se encuentre en producción, de forma paralela a su funcionamiento.
+
+        Si la situación del índice se puede describir con un número real, la predicción que se hace es otro número real y alimentamos el algoritmo con lo que pasó en los últimos 60 días, los datos de aprendizaje serán los siguientes:
+        \begin{itemize}
+            \item $\mathcal{X} = \{(x_1, x_2, \dots, x_30, z) \in \mathbb{R}^30 \times \mathbb{R}\}$
+            \item $\mathcal{Y} = [0,1] \texrm{, donde este número indica el valor de éxito de la predicción.}$
+        \end{itemize}
     \end{solucion}
 
 
@@ -35,11 +62,18 @@
     \end{ejercicio}
 
     \begin{solucion}
-        Diseño
+        \emph{Determinar el ciclo óptimo para las luces de los semáforos en un cruce con mucho tráfico.}
 
-        Aprendizaje
+        Este caso es el más adecuado para una aproximación por diseño. Podemos medir el nivel de tráfico medio en el cruce a lo largo del día, simular qué ocurre con cada uno de los ciclos disponibles y elegir el mejor según el criterio que se establezca.
 
-        Aprendizaje
+        No tendría sentido abordar este problema con una aproximación por aprendizaje, ya que tenemos una forma analítica de medir el impacto de cada ajuste de los parámetros del problema que queremos obtener.
+
+        \emph{Determinar los ingresos medios de una persona a partir de sus datos de nivel de educación, edad, experiencia y estatus social.}
+
+        Este caso, sin embargo, es más gi
+
+        \emph{Determinar si se debe aplicar una campaña de vacunación contra una enfermedad.}
+        Niputaidea
     \end{solucion}
 
     \begin{ejercicio}
