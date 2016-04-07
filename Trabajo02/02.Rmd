@@ -1,0 +1,85 @@
+---
+title: "Trabajo 2"
+author: "Alejandro García Montoro"
+date: "7 de abril de 2016"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Modelos lineales
+
+## Ejercicio 1 - Gradiente descendente
+
+## Apartado 1.1
+
+La función $E(u, v) = (u e^v - 2 v e^{-u})^2$ tiene las siguientes derivadas parciales:
+
+$$
+\begin{aligned}
+\frac{\delta}{\delta u} E(u,v) &= 2(u e^v - 2v e^{-u})(e^v +2v e^{-u})\\
+\frac{\delta}{\delta v} E(u,v) &= 2(u e^v - 2v e^{-u})(u e^v - 2 e^{-u})
+\end{aligned}
+$$
+
+luego su gradiente es
+
+$$
+\nabla E(u,v) = 2(u e^v - 2v e^{-u}) (e^v +2v e^{-u}, u e^v - 2 e^{-u})
+$$
+
+Para implementar el algoritmo del gradiente descendente necesitamos definir la función gradiente siguiente:
+```{r Definición de la función gradiente de E(u,v)}
+# Devuelve el valor del gradiente de E en el punto (u,v)
+E.gradiente <- function(punto){
+  u <- punto[1]
+  v <- punto[2]
+  
+  coeff <- 2*(u*exp(v) - 2*v*exp(-u))
+  
+  return(coeff * c(exp(v) + 2*v*exp(-u), u*exp(v) - 2*exp(-u)))
+}
+```
+
+```{r Gradiente descendiente}
+E <- function(punto){
+  u <- punto[1]
+  v <- punto[2]
+  
+  return((u*exp(v) - 2*v*exp(-u))^2)
+}
+
+gradienteDescendente <- function(w_0 = c(1,1), eta = 0.1, tol = 1e-14){
+  w <- w_0
+  iteraciones <- 0
+  
+  while(E(w) >= tol){
+    direccion <- -E.gradiente(w)
+    w <- w + eta*direccion
+    iteraciones <- iteraciones + 1
+  }
+  
+  return(list("Pesos"=w, "Iter"=iteraciones))
+}
+```
+
+## Apartado 1.2
+Ejecutamos la función anteriormente implementada:
+
+```{r 1.2 - Ejecución de gradiente descendente}
+resultado <- gradienteDescendente()
+```
+
+Comprobamos así que el algoritmo ha ejecutado `r I(resultado$Iter)` iteraciones hasta obtener un valor de $E(u,v)$ inferior a $10^{-14}$
+
+## Apartado 1.3
+
+De la ejecución anterior podemos ver también que los valores de $u$ y $v$ obtenidos tras las `r I(resultado$Iter)` iteraciones son los siguientes:
+$$
+\begin{aligned}
+u &= `r I(resultado$Pesos[1])` \\
+v &= `r I(resultado$Pesos[2])`
+\end{aligned}
+$$
