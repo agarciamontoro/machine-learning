@@ -399,9 +399,10 @@
         \end{align*}
 
         Tenemos entonces la siguiente expresión de la función promedio:
-        \[
-        \bar{g}(x) \approx \frac{1}{K} \sum_{n=1}^K (m_n x + c_n) = \frac{1}{K} \left( \sum_{n=1}^K m_n \right) x  +  \frac{1}{K} \sum_{n=1}^K c_n
-        \]
+        \begin{equation}
+            \bar{g}(x) \approx \frac{1}{K} \sum_{n=1}^K (m_n x + c_n) = \frac{1}{K} \left( \sum_{n=1}^K m_n \right) x  +  \frac{1}{K} \sum_{n=1}^K c_n
+            \label{eq:barg}
+        \end{equation}
 
         Esto es, la función promedio es aproximadamente la recta cuya pendiente es la media de las pendientes entre cada par de puntos generados y cuyo corte con el eje vertical es la media de los cortes con el eje vertical de las rectas generadas para cada par de puntos.
 
@@ -437,6 +438,12 @@
             \item Ejecutar el experimento y dar los resultados. Comparar $E_{out}$ con $bias+var$. Dibujar en unos mismos ejes $\bar{g}(x)$, $E_{out}$ y $f(x)$.
         \end{itemize}
     \end{bonus}
+
+    \begin{solucion}
+        Podemos desarrollar un experimento sencillo atendiendo a la expresión de la función promedio obtenida en \ref{eq:barg}. Así, basta tomar una muestra lo suficientemente grande de una distribución uniforme en el intervalo $[-1,+1]$, tomar sus cuadrados y generar $K$ conjuntos $\mathcal{D}_n$.
+
+        Con cada uno de estos conjuntos podemos calcular $g^{\mathcal{D}_n}(x)$; esto es, la pendiente y punto de corte con el eje vertical de la recta obtenida con los dos puntos de $\mathcal{D}_n$. Por \ref{eq:barg}, basta luego tomar la media de las pendientes y de los puntos de corte y reconstruir así $\bar{g}(x)$.
+    \end{solucion}
 
     \nocite{*}
 
