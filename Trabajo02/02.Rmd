@@ -7,13 +7,16 @@ output: pdf_document
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+library(knitr)
 ```
 
 # Modelos lineales
 
 ## Ejercicio 1 - Gradiente descendente
 
-## Apartado 1.1
+## Apartado 1.a
+
+### Apartado 1.a.1
 
 La función $E(u, v) = (u e^v - 2 v e^{-u})^2$ tiene las siguientes derivadas parciales:
 
@@ -30,6 +33,8 @@ $$
 \nabla E(u,v) = 2(u e^v - 2v e^{-u}) (e^v +2v e^{-u}, u e^v - 2 e^{-u})
 $$
 
+### Apartado 1.a.2
+
 Para implementar el algoritmo del gradiente descendente necesitamos definir la función gradiente siguiente:
 ```{r Definición de la función gradiente de E(u,v)}
 # Devuelve el valor del gradiente de E en el punto (u,v)
@@ -43,7 +48,7 @@ E.gradiente <- function(punto){
 }
 ```
 
-```{r Gradiente descendiente}
+```{r Gradiente descendente}
 E <- function(punto){
   u <- punto[1]
   v <- punto[2]
@@ -51,12 +56,12 @@ E <- function(punto){
   return((u*exp(v) - 2*v*exp(-u))^2)
 }
 
-gradienteDescendente <- function(w_0 = c(1,1), eta = 0.1, tol = 1e-14){
+gradienteDescendente <- function(f, f.gradiente, w_0 = c(1,1), eta = 0.1, tol = 1e-14, maxIter = 100){
   w <- w_0
   iteraciones <- 0
   
-  while(E(w) >= tol){
-    direccion <- -E.gradiente(w)
+  while(f(w) >= tol && iteraciones < maxIter){
+    direccion <- -f.gradiente(w)
     w <- w + eta*direccion
     iteraciones <- iteraciones + 1
   }
@@ -65,21 +70,257 @@ gradienteDescendente <- function(w_0 = c(1,1), eta = 0.1, tol = 1e-14){
 }
 ```
 
-## Apartado 1.2
 Ejecutamos la función anteriormente implementada:
 
-```{r 1.2 - Ejecución de gradiente descendente}
-resultado <- gradienteDescendente()
+```{r Ejecución de gradiente descendente}
+resultado.E <- gradienteDescendente(E, E.gradiente)
 ```
 
-Comprobamos así que el algoritmo ha ejecutado `r I(resultado$Iter)` iteraciones hasta obtener un valor de $E(u,v)$ inferior a $10^{-14}$
+Comprobamos así que el algoritmo ha ejecutado `r I(resultado.E$Iter)` iteraciones hasta obtener un valor de $E(u,v)$ inferior a $10^{-14}$.
 
-## Apartado 1.3
+### Apartado 1.a.3
 
-De la ejecución anterior podemos ver también que los valores de $u$ y $v$ obtenidos tras las `r I(resultado$Iter)` iteraciones son los siguientes:
+De la ejecución anterior podemos ver también que los valores de $u$ y $v$ obtenidos tras las `r I(resultado.E$Iter)` iteraciones son los siguientes:
 $$
 \begin{aligned}
-u &= `r I(resultado$Pesos[1])` \\
-v &= `r I(resultado$Pesos[2])`
+u &= `r I(resultado.E$Pesos[1])` \\
+v &= `r I(resultado.E$Pesos[2])`
 \end{aligned}
 $$
+
+## Apartado 1.b
+
+Sea ahora la función $f(x, y) = x^2 + 2y^2 + 2 \sin(2\pi x)\sin(2\pi y)$, cuyo gradiente es:
+
+
+$$
+\nabla f(x, y) = (2x + 4 \pi \sin(2 \pi y) cos(2 \pi x), 4y + 4 \pi \sin(2 \pi x)cos(2 \pi y))
+$$
+
+### Apartado 1.b.1
+
+Definimos las funciones $f$ y $\nabla f$ en R:
+```{r Definición de la función f}
+f <- function(punto){
+  x <- punto[1]
+  y <- punto[2]
+  
+  return( x*x + 2*y*y + 2*sin(2*pi*x)*sin(2*pi*y) )
+}
+```
+
+```{r Definición de la función gradiente de f(x,y)}
+# Devuelve el valor del gradiente de f en el punto (x,y)
+f.gradiente <- function(punto){
+  x <- punto[1]
+  y <- punto[2]
+  
+  f.grad.x <- 2*x + 4*pi*sin(2*pi*y)*cos(2*pi*x)
+  f.grad.y <- 4*y + 4*pi*sin(2*pi*x)*cos(2*pi*y)
+  
+  return(c(f.grad.x, f.grad.y))
+}
+```
+
+Para poder obtener el gráfico solicitado tenemos que modificar la función del gradiente descendente, de manera que devuelva un vector con el valor de la función en las sucesivas iteraciones y el criterio de parada sea ahora únicamente el número de iteraciones:
+
+```{r Redefinición del gradiente descendente}
+gradienteDescendente.log <- function(f, f.gradiente, w_0 = c(1,1), eta = 0.1, maxIter = 50){
+  w <- w_0
+  valorIter <- f(w)
+  
+  
+  while(length(valorIter) < maxIter){
+    direccion <- -f.gradiente(w)
+    w <- w + eta*direccion
+    valorIter <- c(valorIter, f(w))
+  }
+  
+  return(list("Pesos"=w, "Iter"=length(valorIter)-1, "Valores"=valorIter))
+}
+```
+
+Generamos ahora los datos y el gráfico con la función modificada:
+
+```{r Gráfico gradiente descendente}
+# Ejecutamos el experimento con ambos parámetros
+resultado.f.0.01 <- gradienteDescendente.log(f, f.gradiente, eta = 0.01)
+resultado.f.0.1 <- gradienteDescendente.log(f, f.gradiente, eta = 0.1)
+
+# Generamos los dos plots
+plot(resultado.f.0.1$Valores, col = 'red', pch = 20, asp=1, type='o',
+     main=expression(paste("Gradiente descendente con ",
+                           f(x,y) == x^2 + 2*y^2 + 2*plain(sin)(2*pi*x)*plain(sin)(2*pi*y))),
+     xlab="Número de iteraciones", ylab="Valor de f")
+points(resultado.f.0.01$Valores, col = 'blue', pch = 20, asp=1, type='o')
+
+# Añadimos leyenda de los datos dibujados.
+legend("bottomright", c(expression(eta == 0.1), expression(eta == 0.01)),
+       bg="white", col=c("red", "blue"), lty=1, pch=20, lwd=1.75)
+```
+
+### Apartado 1.b.2
+
+Redefinimos la función, de nuevo, para que devuelva también un vector de los puntos por los que pasa. El criterio de parada sigue siendo el número máximo ---cincuenta en este caso--- de iteraciones:
+
+```{r Redefinición del gradiente descendente 2}
+gradienteDescendente.log2 <- function(f, f.gradiente, w_0 = c(1,1), eta = 0.1, maxIter = 50){
+  w <- w_0
+  variables.x <- w[1]
+  variables.y <- w[2]
+  valores <- f(w)
+  
+  
+  while(length(valores) < maxIter){
+    direccion <- -f.gradiente(w)
+    w <- w + eta*direccion
+    variables.x <- c(variables.x, w[1])
+    variables.y <- c(variables.y, w[2])
+    valores <- c(valores, f(w))
+  }
+  
+  return(list("Pesos"=w, "Iter"=length(valores)-1,
+              "Res"=data.frame(X = variables.x, Y = variables.y, Value = valores)))
+}
+```
+
+Generamos ahora los datos desde los datos iniciales indicados y tomamos los mínimos
+
+```{r Generación de datos con log2}
+# Definimos una función que, dado p, devuelve el valor mínimo del gradiente descendente
+# con punto inicial = (p,p) y dónde se alcanza este:
+minimoGradiente <- function(p){
+  valores <- gradienteDescendente.log2(f, f.gradiente, c(p, p))$Res
+  unlist(valores[which.min(valores$Value),])
+}
+
+# Definimos los puntos iniciales
+puntosIniciales <- c(0.1, 1, -0.5, 1)
+
+# Usamos la funcion minimoGradiente sobre cada uno de los puntos anteriores
+tablaMinimos <- lapply(puntosIniciales, minimoGradiente)
+
+# Convertimos la lista devuelta en un data frame y ponemos nombres a columnas y filas
+tablaMinimos <- data.frame(matrix(unlist(tablaMinimos), nrow=4, byrow=T))
+colnames(tablaMinimos) <- c("X", "Y", "Valor")
+rownames(tablaMinimos) <- c("(0.1, 0.1)", "(1, 1)", "(-0.5, 0.5)", "(-1, -1)")
+
+# Generamos la tabla solicitada
+kable(tablaMinimos, digits=5)
+```
+
+# Ejercicio 2
+
+## Ejercicio 2.1
+
+Redefinimos, de nuevo, la función `gradienteDescendente` del primer apartado para realizar la técnica de *coordenada descendente*:
+
+```{r Coordenada descendente - Definición}
+coordenadaDescendente <- function(f, f.grad, w_0 = c(1,1), eta = 0.1, tol = 1e-14, maxIter = 50){
+  w <- w_0
+  iteraciones <- 0
+  
+  while(f(w) >= tol && iteraciones < maxIter){
+    direccion.x <- c(-f.grad(w)[1], 0)
+    w <- w + eta*direccion.x
+    
+    direccion.y <- c(0, -f.grad(w)[2])
+    w <- w + eta*direccion.y
+    
+    iteraciones <- iteraciones + 1
+  }
+  
+  return(list("Pesos"=w, "Iter"=iteraciones))
+}
+```
+
+```{r Coordenada descendente - Ejecución}
+res.coordDesc <- coordenadaDescendente(E, E.gradiente, maxIter = 15)
+```
+
+De la ejecución anterior podemos ver que los valores de $u$ y $v$ obtenidos tras las `r I(res.coordDesc$Iter)` iteraciones son los siguientes:
+
+$$
+\begin{aligned}
+u &= `r I(res.coordDesc$Pesos[1])` \\
+v &= `r I(res.coordDesc$Pesos[2])`
+\end{aligned}
+$$
+
+El valor alcanzado es además $f(`r I(res.coordDesc$Pesos[1])`, `r I(res.coordDesc$Pesos[2])`) = `r I(E(res.coordDesc$Pesos))`$.
+
+## Ejercicio 2.b
+
+Como primera aproximación a la comparación, vamos a ejecutar ambos métodos sobre las funciones $f$ y $E$ con un máximo de 20 iteraciones cada uno, con el parámetro `tol` puesto a un valor virtualmente $-\infty$ para asegurarnos de que las iteraciones se realizan:
+
+```{r Comparación GradienteCoordenada}
+# Tomamos los resultados para f
+comp.f.grad <- gradienteDescendente(f, f.gradiente, maxIter = 20, tol=-999999)
+comp.f.coor <- coordenadaDescendente(f, f.gradiente, maxIter = 20, tol=-999999)
+
+# Tomamos los resultados para E
+comp.E.grad <- gradienteDescendente(E, E.gradiente, maxIter = 20, tol=-999999)
+comp.E.coor <- coordenadaDescendente(E, E.gradiente, maxIter = 20, tol=-999999)
+
+# Obtenemos el valor de f en el mínimo devuelto por ambos algoritmos
+min.f.grad <- f(comp.f.grad$Pesos)
+min.f.coor <- f(comp.f.coor$Pesos)
+
+# Obtenemos el valor de E en el mínimo devuelto por ambos algoritmos
+min.E.grad <- E(comp.E.grad$Pesos)
+min.E.coor <- E(comp.E.coor$Pesos)
+```
+
+Podemos hacer una tabla rápida para comparar estos mínimos:
+
+```{r Dataframe de comparación}
+# Generamos un data frame con los datos obtenidos
+tablaComp <- data.frame(c(min.f.coor, min.E.coor),
+                        c(min.f.grad, min.E.grad))
+
+colnames(tablaComp) <- c("Valor de f", "Valor de E")
+rownames(tablaComp) <- c("Coordenada descendente", "Gradiente descendente")
+
+# Generamos la tabla a partir del data frame
+kable(tablaComp, digits=15)
+```
+
+Ante estos datos parece que es claro que el método del gradiente descendente es mejor que el de coordenada descendente. Sin embargo, esta comparación no ha sido justa, ya que el método de coordenada está haciendo en realidad el doble de iteraciones que el de gradiente.
+
+Así, para ser justos en la comparación, tenemos que ejecutar el método inicial de gradiente el doble de veces que el de la coordenada. Vamos a comparar entonces con 20 y 10 iteraciones, respectivamente, ambos métodos con las mismas funciones anteriores
+
+```{r Comparación GradienteCoordenada 2}
+# Tomamos los resultados para f
+comp.f.grad <- gradienteDescendente(f, f.gradiente, maxIter = 20, tol=-999999)
+comp.f.coor <- coordenadaDescendente(f, f.gradiente, maxIter = 10, tol=-999999)
+
+# Tomamos los resultados para E
+comp.E.grad <- gradienteDescendente(E, E.gradiente, maxIter = 20, tol=-999999)
+comp.E.coor <- coordenadaDescendente(E, E.gradiente, maxIter = 10, tol=-999999)
+
+# Obtenemos el valor de f en el mínimo devuelto por ambos algoritmos
+min.f.grad <- f(comp.f.grad$Pesos)
+min.f.coor <- f(comp.f.coor$Pesos)
+
+# Obtenemos el valor de E en el mínimo devuelto por ambos algoritmos
+min.E.grad <- E(comp.E.grad$Pesos)
+min.E.coor <- E(comp.E.coor$Pesos)
+```
+
+Rehacemos la tabla:
+
+```{r Dataframe de comparación 2}
+# Generamos un data frame con los datos obtenidos
+tablaComp <- data.frame(c(min.f.coor, min.E.coor),
+                        c(min.f.grad, min.E.grad))
+
+colnames(tablaComp) <- c("Valor de f", "Valor de E")
+rownames(tablaComp) <- c("Coordenada descendente", "Gradiente descendente")
+
+# Generamos la tabla a partir del data frame
+kable(tablaComp, digits=15)
+```
+
+Como vemos, en el caso de $E$ no ha habido cambio, pero en el caso de $f$ sí: el gradiente, en este caso, mucho más justo que el anterior, da unos valores muchísimo mejores, como era de esperar.
+
+# Ejercicio 3
