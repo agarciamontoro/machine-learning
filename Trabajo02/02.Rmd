@@ -8,6 +8,7 @@ output: pdf_document
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 library(knitr)
+library(numDeriv)
 ```
 
 # Modelos lineales
@@ -195,7 +196,7 @@ minimoGradiente <- function(p){
 }
 
 # Definimos los puntos iniciales
-puntosIniciales <- c(0.1, 1, -0.5, 1)
+puntosIniciales <- c(0.1, 1, -0.5, -1)
 
 # Usamos la funcion minimoGradiente sobre cada uno de los puntos anteriores
 tablaMinimos <- lapply(puntosIniciales, minimoGradiente)
@@ -211,7 +212,7 @@ kable(tablaMinimos, digits=5)
 
 ## Ejercicio 2 - Coordenada descendente
 
-### Ejercicio 2.1
+### Apartado 2.1
 
 Redefinimos, de nuevo, la función `gradienteDescendente` del primer apartado para realizar la técnica de *coordenada descendente*:
 
@@ -249,7 +250,7 @@ $$
 
 El valor alcanzado es además $f(`r I(res.coordDesc$Pesos[1])`, `r I(res.coordDesc$Pesos[2])`) = `r I(E(res.coordDesc$Pesos))`$.
 
-### Ejercicio 2.b
+### Apartado 2.b
 
 Como primera aproximación a la comparación, vamos a ejecutar ambos métodos sobre las funciones $f$ y $E$ con un máximo de 20 iteraciones cada uno, con el parámetro `tol` puesto a un valor virtualmente $-\infty$ para asegurarnos de que las iteraciones se realizan:
 
@@ -351,6 +352,8 @@ metodoNewton <- function(f, w_0 = c(1,1), eta = 0.1, maxIter = 50){
 }
 ```
 
+Estudiamos ahora de nuevo la mejor solución encontrada por el Método de Newton tras 50 iteraciones con los puntos iniciales $(0.1, 0.1)$, $(1,1)$, $(-0.5, -0.5)$ y $(-1, -1)$, creando una tabla comparativa en la que vemos el mínimo alcanzado y el punto donde se alcanza:
+
 ```{r Generación de datos con Newton}
 # Definimos una función que, dado p, devuelve el valor mínimo del método de Newton
 # con punto inicial = (p,p) y dónde se alcanza este:
@@ -360,7 +363,7 @@ minimoGradiente <- function(p){
 }
 
 # Definimos los puntos iniciales
-puntosIniciales <- c(0.1, 1, -0.5, 1)
+puntosIniciales <- c(0.1, 1, -0.5, -1)
 
 # Usamos la funcion minimoGradiente sobre cada uno de los puntos anteriores
 tablaMinimos.N <- lapply(puntosIniciales, minimoGradiente)
@@ -373,3 +376,156 @@ rownames(tablaMinimos.N) <- c("(0.1, 0.1)", "(1, 1)", "(-0.5, 0.5)", "(-1, -1)")
 # Generamos la tabla solicitada
 kable(tablaMinimos.N, digits=5)
 ```
+
+Por último, del mismo modo en el que en el ejercicio 1.b estudiamos el comportamiento ante tasas de aprendizaje distintas, generamos ahora un gráfico parecido para determinar cómo se comporta el método de Newton:
+
+```{r Gráfico método de Newton}
+# Ejecutamos el experimento con ambos parámetros
+newton01 <- unlist(metodoNewton(f, eta = 0.1)$Res["Value"])
+newton001 <- unlist(metodoNewton(f, eta = 0.01)$Res["Value"])
+
+# Generamos los dos plots
+plot(newton01, col = 'red', pch = 20, type='o',
+     main=expression(paste("Método de Newton con ",
+                           f(x,y) == x^2 + 2*y^2 + 2*plain(sin)(2*pi*x)*plain(sin)(2*pi*y))),
+     xlab="Número de iteraciones", ylab="Valor de f")
+points(newton001, col = 'blue', pch = 20, type='o')
+
+# Añadimos leyenda de los datos dibujados.
+legend("bottomright", c(expression(eta == 0.1), expression(eta == 0.01)),
+       bg="white", col=c("red", "blue"), lty=1, pch=20, lwd=1.75)
+```
+
+En este caso es claro que la tasa de aprendizaje más alta encuentra más rápido el óptimo local, ya que se mueve más rápido.
+
+Comparemos ahora ambos métodos, mostrando las curvas de descenso con cada punto inicial considerado y con una tasa de aprendizaje $\eta = 0.1$. Definimos para esto una función que recibe un punto inicial, un método de descenso y una función, de manera que genere el gráfico correspondiente:
+
+```{r Comparación gradiente - Newton}
+dibujarComparacion <- function(p, foo = f, tasa = 0.01, ...){
+  res.grad <- unlist(gradienteDescendente.log2(f, f.gradiente, w_0 = c(p,p), eta = tasa)$Res["Value"])
+  res.newt <- unlist(metodoNewton(f, w_0 = c(p,p), eta = tasa)$Res["Value"])
+  
+  plot(res.grad, pch = 20, type='o', col="red", main=bquote(paste(w[0],"= (",.(p),", ",.(p), ")")), ...)
+  points(res.newt, pch = 20, type='o', col="blue", ...)
+}
+
+
+# Definimos una rejilla 2x2 para los plots
+prev_par <- par(no.readonly = T)
+
+par(mfrow=c(2, 2), mar=c(0.1, 1.1, 2.1, 0.1), oma=2.5*c(1,1,1,1))
+
+ # . <- lapply(puntosIniciales, dibujarComparacion)
+dibujarComparacion(0.1, xaxt="n")
+dibujarComparacion(1, xaxt="n", yaxt="n")
+dibujarComparacion(-0.5)
+dibujarComparacion(-1, yaxt="n")
+
+mtext("Gradiente descendente y método de Newton", outer=TRUE, line=0.5)
+
+legend("right", c("Gradiente descendente", "Método de Newton"),
+       bg="white", col=c("red", "blue"), lty=1, pch=20, lwd=1.75)
+
+# Dejamos los parámetros como estaban anteriormente
+par(prev_par)
+```
+
+Es claro que el gradiente descendente converge y consigue unos resultados muchísimo mejores que los del método de Newton con las mismas iteraciones. El último se queda estancado muy rápido y el primero consigue descender rápidamente para converger a un estado estable muy pronto, normalmente entre las 10 primeras iteraciones.
+
+## Ejercicio 4 - Regresión logística
+
+Para este ejercicio vamos a reusar código de la práctica anterior:
+
+```{r Reusando código}
+simula_unif <- function(N, dim, rango){
+    lapply(rep(dim, N), runif, min = rango[1], max = rango[2])
+}
+
+simula_recta <- function(intervalo){
+    # Simulamos dos puntos dentro del cuadrado intervalo x intervalo
+    punto1 <- runif(2, min=intervalo[1], max=intervalo[2])
+    punto2 <- runif(2, min=intervalo[1], max=intervalo[2])
+
+    # Generamos los parámetros que definen la recta
+    a <- (punto2[2] - punto1[2]) / (punto2[1] - punto1[1])
+    b <- -a * punto1[1] + punto1[2]
+
+    # Devolvemos un vector concatenando ambos parámetros
+    c(a,b)
+}
+
+generador_etiquetados <- function(f){
+    function(x,y){
+        sign(f(x,y))
+    }
+}
+```
+
+Definimos la función $f$ y el conjunto $\mathcal{D}$:
+
+```{r Definición de f y D}
+regLog.frontera <- simula_recta(c(-1,1))
+datos <- simula_unif(100, 2, c(-1,1))
+regLog.datos <- matrix(unlist(datos), ncol = 2, byrow = T)
+
+regLog.f <- function(x,y){
+    y - regLog.frontera[1]*x - regLog.frontera[2]
+}
+```
+
+Echémosle un vistazo a nuestros datos:
+
+```{r Vistazo a los datos}
+regLog.etiquetado <- generador_etiquetados(regLog.f)
+regLog.etiquetas <- regLog.etiquetado(regLog.datos[,1], regLog.datos[,2])
+
+# Genera vector de colores basado en las etiquetas
+colores <- ifelse(regLog.etiquetas == 1, "green", "red")
+
+# Generamos la gráfica
+plot(regLog.datos, asp = 1, col = colores, pch = 20,
+     main="Muestra uniforme etiquetada", xlab="", ylab="")
+abline(rev(regLog.frontera), col="blue")
+```
+
+### Apartado 4.a
+
+Definimos una función que implementa regresión logística con gradiente descendente estocástico:
+
+```{r RL-SGD}
+distance <- function(x,y){
+  return(sqrt(sum((x-y)^2)))
+}
+
+RL.SGD <- function(datos, etiquetas, w_0 = c(0,0), eta = 0.01, tol= 0.01){
+  w.curr <- w_0
+
+  iteraciones <- 0
+  
+  while(iteraciones == 0 || distance(w.prev, w.curr) > tol){
+    iteraciones <- iteraciones+1
+    
+    w.prev <- w.curr
+    
+    # Tomamos una permutación de los datos
+    indices <- sample(length(etiquetas))
+    
+    # Bucle sobre toda la muestra
+    for(index in indices){
+      dato <- datos[index,]
+      etiq <- etiquetas[index]
+      
+      g_t <- -(etiq*dato)/(1+exp(-etiq*w.curr*dato))
+      w.curr <- w.curr + eta*g_t
+    }
+    
+    iteraciones <- iteraciones + 1
+  }
+
+return(list("Pesos"=w.curr, "Iter"=iteraciones))
+}
+
+regLog.res <- RL.SGD(regLog.datos, regLog.etiquetas)
+#abline(rev(regLog.res$Pesos), col="red")
+```
+
