@@ -1,0 +1,82 @@
+\documentclass[a4paper, 11pt]{article}
+\usepackage[cuestionario=1]{estilo}
+
+\begin{document}
+
+    \maketitle
+
+    \section{Bonus}
+
+    \begin{ejercicio}
+        Resolver los siguientes problemas:
+        \begin{enumerate}
+            \item La distancia entre dos curvas en el plano está dada por el mínimo de la expresión $\sqrt{(x_1-x_2)^2+(y_1-y_2)^2}$ donde $(x_1,y_1)$ está sobre una de las curvas y $(x_2,y_2)$ está sobre la otra. Calcular la distancia entre la línea $x+y=4$ y la elipse $x^2+2y^2=1$.
+        \end{enumerate}
+    \end{ejercicio}
+
+    \begin{solucion}
+        Lo primero que tenemos que notar es que el mínimo de $g(x_1, y_1, x_2, y_2) =  \sqrt{(x_1-x_2)^2+(y_1-y_2)^2}$ se alcanza en el mismo punto que el mínimo de $g^2(x_1, y_1, x_2, y_2) =  (x_1-x_2)^2+(y_1-y_2)^2$. Tomando $g^2$ como función a minimizar y con las restricciones enunciadas, el lagrangiano con el que tenemos que trabajar es el siguiente:
+        \[
+        \mathcal{L}(x_1, y_1, x_2, y_2, \lambda, \mu) = (x_1-x_2)^2 + (y_1-y_2)^2 - \lambda (x_1+y_1-4) - \mu (x_2^2+2y_2^2-1)
+        \]
+
+        Calculamos sus derivadas parciales:
+        \begin{align*}
+            \frac{\partial}{\partial x_1} \mathcal{L} &= 2(x_1 - x_2) - \lambda \\
+            \frac{\partial}{\partial y_1} \mathcal{L} &= 2(y_1 - y_2) - \lambda \\
+            \frac{\partial}{\partial x_2} \mathcal{L} &= -2(x_1 - x_2) - 2\mu x_2 \\
+            \frac{\partial}{\partial y_2} \mathcal{L} &= -2(y_1 - y_2) - 4\mu y_2 \\
+            \frac{\partial}{\partial \lambda} \mathcal{L} &= x_1 + y_1 - 4 \\
+            \frac{\partial}{\partial \mu} \mathcal{L} &= x_2^2 + 2y_2^2 - 1
+        \end{align*}
+
+        Igualando a cero las derivadas parciales anteriores y despejando los términos con $\lambda$ o $\mu$ llegamos al sistema de ecuaciones siguiente, cuyas soluciones son los puntos críticos del lagrangiano $\mathcal{L}$; es decir, los candidatos a mínimo:
+
+        \begin{align}
+            2(x_1 - x_2) &= \lambda \label{eq:lag1}\\
+            2(y_1 - y_2) &= \lambda \label{eq:lag2}\\
+            -2(x_1 - x_2) &= - 2\mu x_2 \label{eq:lag3}\\
+            -2(y_1 - y_2) &= - 4\mu y_2 \label{eq:lag4}\\
+            x_1 + y_1 &= 4 \label{eq:lag5}\\
+            x_2^2 + 2y_2^2 &= 1 \label{eq:lag6}
+        \end{align}
+
+        Si ahoar sumamos las ecuaciones \ref{eq:lag1} y \ref{eq:lag3} por un lado y la \ref{eq:lag2} y \ref{eq:lag4} por otro llegamos a las expresiones siguientes:
+
+        \begin{align}
+            \lambda &= -2 \mu x_2 \label{eq:resol1} \\
+            \lambda &= -4 \mu y_2 \label{eq:resol2}
+        \end{align}
+
+        Igualando \ref{eq:resol1} y \ref{eq:resol2}, y teniendo en cuenta que $\mu \neq 0$ ---esto es evidente, ya que si lo fuera, por \ref{eq:lag3} y \ref{eq:lag4} tendríamos un punto de intersección entre ambas curvas, situación que no se da---, llegamos a
+        \[
+        x_2 = 2y_2
+        \]
+
+        Imponiendo \ref{eq:lag6} concluimos que
+        \begin{align}
+            x_2 &= \sqrt{\frac{2}{3}} \label{eq:sol1} \\
+            y_2 &= \frac{1}{2}\sqrt{\frac{2}{3}} = \frac{1}{\sqrt{6}} \label{eq:sol2}
+        \end{align}
+
+        Igualando ahora \ref{eq:lag1} y \ref{eq:lag2} y sustituyendo los valores que acabamos de deducir tenemos el siguiente par de ecuaciones junto con \ref{eq:lag5}:
+
+        \begin{align*}
+            x_1 - y_1 &= \sqrt{\frac{2}{3}} - \frac{1}{\sqrt{6}}
+            x_1 + y_1 = 4
+        \end{align*}
+        de donde concluimos que
+        \begin{align}
+            x_1 &= 2 + \frac{1}{2\sqrt{6}} \\
+            y_1 &= 2 - \frac{1}{2\sqrt{6}}
+        \end{align}
+
+        La distancia entre la recta y la elipse es, por tanto:
+
+        \[
+        g(2 + \frac{1}{2\sqrt{6}}, 2 - \frac{1}{2\sqrt{6}}, \sqrt{\frac{2}{3}}, \frac{1}{\sqrt{6}}) = \sqrt{2} \left(2 - \frac{3}{2\sqrt{6}}\right) \approx 1.962402
+        \]
+
+    \end{solucion}
+
+\end{document}

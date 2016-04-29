@@ -209,9 +209,9 @@ rownames(tablaMinimos) <- c("(0.1, 0.1)", "(1, 1)", "(-0.5, 0.5)", "(-1, -1)")
 kable(tablaMinimos, digits=5)
 ```
 
-# Ejercicio 2
+## Ejercicio 2 - Coordenada descendente
 
-## Ejercicio 2.1
+### Ejercicio 2.1
 
 Redefinimos, de nuevo, la función `gradienteDescendente` del primer apartado para realizar la técnica de *coordenada descendente*:
 
@@ -249,7 +249,7 @@ $$
 
 El valor alcanzado es además $f(`r I(res.coordDesc$Pesos[1])`, `r I(res.coordDesc$Pesos[2])`) = `r I(E(res.coordDesc$Pesos))`$.
 
-## Ejercicio 2.b
+### Ejercicio 2.b
 
 Como primera aproximación a la comparación, vamos a ejecutar ambos métodos sobre las funciones $f$ y $E$ con un máximo de 20 iteraciones cada uno, con el parámetro `tol` puesto a un valor virtualmente $-\infty$ para asegurarnos de que las iteraciones se realizan:
 
@@ -323,4 +323,53 @@ kable(tablaComp, digits=15)
 
 Como vemos, en el caso de $E$ no ha habido cambio, pero en el caso de $f$ sí: el gradiente, en este caso, mucho más justo que el anterior, da unos valores muchísimo mejores, como era de esperar.
 
-# Ejercicio 3
+## Ejercicio 3 - Método de Newton
+
+El método de Newton es igual que el de gradiente descendente, pero esta vez la dirección de cambio viene dada por $H^{-1}\nabla f(w)$, donde $H$ es la matriz Hessiana de f. Por tanto, basta adaptar la función anterior para que use esta nueva dirección. Además, vamos ahora a facilitar la llamada a la función: haremos uso del paquete `numDeriv`, que se debe instalar antes de ejecutar el siguiente trozo de código; con él, tenemos a disposición las funciones `grad(func, x)`, que devuelve el valor de la función `func` en el punto `x` y `hessian(func, x)` que, del mismo modo, devuelve el valor de la matriz hessiana de `func` en el punto `x`. Así, podemos obviar el parámetro `f.grad` de las funciones anteriores y pasar sólo la función; el código se encargará de calcular los gradientes y hessianas necesarios.
+
+Como además vamos a comparar el funcionamiento del método de Newton con lo analizado del gradiente descendente en el apartado 1.b, vamos a fijar como único criterio de parada el número de iteraciones, para estudiar qué pasa en cada momento:
+
+
+```{r Definición del método de Newton}
+metodoNewton <- function(f, w_0 = c(1,1), eta = 0.1, maxIter = 50){
+  w <- w_0
+  variables.x <- w[1]
+  variables.y <- w[2]
+  valores <- f(w)
+  
+  
+  while(length(valores) < maxIter){
+    direccion <- -solve(hessian(f, w)) %*% grad(f, w)
+    w <- w + eta*direccion
+    variables.x <- c(variables.x, w[1])
+    variables.y <- c(variables.y, w[2])
+    valores <- c(valores, f(w))
+  }
+  
+  return(list("Pesos"=w, "Iter"=length(valores)-1,
+              "Res"=data.frame(X = variables.x, Y = variables.y, Value = valores)))
+}
+```
+
+```{r Generación de datos con Newton}
+# Definimos una función que, dado p, devuelve el valor mínimo del método de Newton
+# con punto inicial = (p,p) y dónde se alcanza este:
+minimoGradiente <- function(p){
+  valores <- metodoNewton(f, c(p, p))$Res
+  unlist(valores[which.min(valores$Value),])
+}
+
+# Definimos los puntos iniciales
+puntosIniciales <- c(0.1, 1, -0.5, 1)
+
+# Usamos la funcion minimoGradiente sobre cada uno de los puntos anteriores
+tablaMinimos.N <- lapply(puntosIniciales, minimoGradiente)
+
+# Convertimos la lista devuelta en un data frame y ponemos nombres a columnas y filas
+tablaMinimos.N <- data.frame(matrix(unlist(tablaMinimos.N), nrow=4, byrow=T))
+colnames(tablaMinimos.N) <- c("X", "Y", "Valor")
+rownames(tablaMinimos.N) <- c("(0.1, 0.1)", "(1, 1)", "(-0.5, 0.5)", "(-1, -1)")
+
+# Generamos la tabla solicitada
+kable(tablaMinimos.N, digits=5)
+```

@@ -1,0 +1,97 @@
+\ProvidesPackage{estilo}
+
+%Comandos para configurar el idioma
+\usepackage[spanish,activeacute]{babel}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc} %Necesario para el uso de las comillas latinas.
+
+% Bibliografía
+\usepackage{babelbib}
+\usepackage[nottoc,notlot,notlof]{tocbibind}
+
+
+%Código
+\usepackage{listings}
+\usepackage{color}
+
+\definecolor{dkgreen}{rgb}{0,0.6,0}
+\definecolor{gray}{rgb}{0.5,0.5,0.5}
+\definecolor{mauve}{rgb}{0.58,0,0.82}
+
+\lstset{frame=tb,
+  aboveskip=3mm,
+  belowskip=3mm,
+  language=Python,
+  showstringspaces=false,
+  columns=flexible,
+  basicstyle={\small\ttfamily},
+  numbers=left,
+  numberstyle=\tiny\color{gray},
+  keywordstyle=\color{blue},
+  commentstyle=\color{dkgreen},
+  stringstyle=\color{mauve},
+  breaklines=true,
+  breakatwhitespace=true,
+  tabsize=3
+}
+
+%Package for options management
+\RequirePackage{kvoptions}
+\DeclareStringOption[0]{cuestionario}
+\ProcessKeyvalOptions*
+
+\usepackage{hyperref}
+\hypersetup{
+  pdfauthor={Alejandro García Montoro},
+  pdftitle={Cuestionario \estilo@cuestionario},
+  unicode,
+  plainpages=false,
+  colorlinks,
+  citecolor=black,
+  filecolor=black,
+  linkcolor=black,
+  urlcolor=black,
+}
+
+%Paquetes matemáticos
+\usepackage{amsmath,amsfonts,amsthm}
+\usepackage{amssymb}
+%\usepackage[all]{xy} %Para diagramas
+\usepackage{graphicx} %Inclusion imagenes
+\usepackage{enumerate} %Personalización de enumeraciones
+\usepackage{mathtools} %Para \coloneqq
+\usepackage{tikz} %Dibujos
+\usetikzlibrary{positioning} %Distancias y posicionamiento en tikz
+
+%Tipografía escalable
+\usepackage{lmodern}
+%Legibilidad
+\usepackage{microtype}
+
+\title{Aprendizaje automático \\ Cuestionario \estilo@cuestionario}
+\author{Alejandro García Montoro\\
+    \href{mailto:agarciamontoro@correo.ugr.es}{agarciamontoro@correo.ugr.es}}
+\date{\today}
+
+\newtheorem{ejercicio}{Ejercicio}
+\newtheorem{bonus}{Bonus}
+\theoremstyle{definition}
+\newtheorem*{solucion}{Solución}
+\theoremstyle{remark}
+\newtheorem{apartado}{Apartado}[ejercicio]
+
+% Useful for commenting align environments!
+% Taken from http://tex.stackexchange.com/a/38171
+\newcommand{\comment}[1]{%
+  \text{\phantom{(#1)}} \tag{#1}
+}
+
+\usepackage{hyperref}
+
+% Comando para añadir URL, enlace y pie de página de una vez.
+\newcommand\fnurl[2]{%
+  \href{#2}{#1}\footnote{\url{#2}}%
+}
+
+
+\setlength{\@fptop}{0pt}
