@@ -939,3 +939,102 @@ Hemos conseguido así una cota mejor del error fuera de la muestra, ya que ahora
 # Sobreajuste
 
 ## Ejercicio 1 - Sobreajuste
+
+Lo primero que vamos a hacer es definir una función para calcular el polinomio de Legendre de orden $k$ en el punto x:
+
+```{r Definición de polinomios de Legendre}
+# Definición recursiva del polinomio de Legendre de orden k en el punto x
+legendre <- function(k, x){
+  if(k == 0 || k == 1){
+    return(x^k)
+  }
+  else{
+    L_k1 <- legendre(k-1,x)
+    L_k2 <- legendre(k-2, x)
+    L_k <- ((2*k - 1) / k) * x * L_k1 - ((k - 1) / k) * L_k2
+    return(L_k)
+  }
+}
+```
+
+Podemos comprobar que todo ha salido bien haciendo una gráfica de los primeros 10 polinomios de Legendre, que genera un resultado muy llamativo:
+
+```{r}
+f <- function(x){
+  legendre(0,x)
+}
+plot(f, -1, 1, lwd=1.5, xlim=c(-1,1), ylim=c(-1,1), main="10 primeros polinomios de Legendre")
+
+colores <- rainbow(10)
+
+for (k in seq(10)) {
+  f <- function(x){
+    legendre(k,x)
+  }
+  color <- rgb(runif(1,0,1),runif(1,0,1),runif(1,0,1))
+  plot(f, -1, 1, col=colores[k], lwd=1.5, xlim=c(-1,1), ylim=c(-1,1), add=T)
+}
+```
+
+Definimos ahora los valores de $Q_f$, $N$ y $\sigma$:
+
+```{r Parámetros}
+Qf <- 20
+N <- 50
+sigma <- 1
+```
+
+Generamos los coeficientes $a_q$:
+
+```{r Generación de coeficientes}
+# Generamos los coeficientes
+a_q <- rnorm(N+1)
+
+# Normalizamos
+a_q <- a_q / sqrt(sum(sapply(seq(0,Qf), function(q){1 / (2*q + 1)})))
+
+legendre.f <- function(x){
+  res <- sapply(seq(0,Qf), function(q){ a_q[q+1] * legendre(q,x)})
+
+  return(sum(res))
+}
+
+legendre.eps = rnorm(N)
+legendre.X = runif(N, -1, 1)
+legendre.Y = sapply(legendre.X, legendre.f) + sigma*legendre.eps
+
+```
+
+### Apartado 1.a
+
+Para ajustar los datos a $\mathcal{H}_2$ y a $\mathcal{H}_{10}$ usaremos regresión lineal; buscamos así los coeficientes de los polinomios de segundo y décimo grado, respectivamente, que ajustan mejor los datos:
+
+```{r Regresión lineal para ajustar a H2 y H10}
+# Generamos los datos que deben ser ajustados
+legendre.g2.dat = t(sapply(legendre.X, function(x){ sapply(seq(1,2), function(n){x^n}) }))
+legendre.g10.dat = t(sapply(legendre.X, function(x){ sapply(seq(2,10), function(n){x^n}) }))
+
+# Ajustamos con regresión lineal
+legendre.g2.pesos <- regresLin(legendre.g2.dat, legendre.Y)
+legendre.g10.pesos <- regresLin(legendre.g10.dat, legendre.Y)
+```
+
+Podemos ver cómo se ajustan ambas funciones a los datos:
+
+```{r}
+legendre.g2 <- function(x){
+  sum(sapply(seq(1,2), function(i){ legendre.g2.pesos[i] * x^i})) + legendre.g2.pesos[3]
+}
+
+legendre.g10 <- function(x){
+  sum(sapply(seq(1,9), function(i){ legendre.g10.pesos[i] * x^i})) + legendre.g10.pesos[10]
+}
+
+plot(legendre.X, legendre.Y, pch=20, col="blue")
+
+x <- seq(-1, 1, by=0.01)
+y <- sapply(x, legendre.g10)
+points(x,y,type="l")
+```
+
+
