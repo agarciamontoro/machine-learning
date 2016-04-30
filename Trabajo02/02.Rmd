@@ -957,7 +957,7 @@ legendre <- function(k, x){
 }
 ```
 
-Podemos comprobar que todo ha salido bien haciendo una gráfica de los primeros 10 polinomios de Legendre, que genera un resultado muy llamativo:
+Podemos comprobar que todo ha salido bien haciendo una gráfica de los primeros 10 polinomios de Legendre, que podemos comparar con una de los numerosos gráficos iguales que se pueden encontrar en la literatura que cubre este tema:
 
 ```{r}
 f <- function(x){
@@ -987,22 +987,22 @@ sigma <- 1
 Generamos los coeficientes $a_q$:
 
 ```{r Generación de coeficientes}
-# Generamos los coeficientes
-a_q <- rnorm(N+1)
 
-# Normalizamos
-a_q <- a_q / sqrt(sum(sapply(seq(0,Qf), function(q){1 / (2*q + 1)})))
+# Generamos los coeficientes normalizados
+a_q <- rnorm(N+1) / sqrt(sum(sapply(seq(0,Qf), function(q){1 / (2*q + 1)})))
 
 legendre.f <- function(x){
-  res <- sapply(seq(0,Qf), function(q){ a_q[q+1] * legendre(q,x)})
-
-  return(sum(res))
+  res <- 0
+  for (q in seq(0,Qf)) {
+    res <- res + a_q[q+1] * legendre(q,x)
+  }
+  
+  return(res)
 }
 
 legendre.eps = rnorm(N)
 legendre.X = runif(N, -1, 1)
 legendre.Y = sapply(legendre.X, legendre.f) + sigma*legendre.eps
-
 ```
 
 ### Apartado 1.a
@@ -1012,29 +1012,62 @@ Para ajustar los datos a $\mathcal{H}_2$ y a $\mathcal{H}_{10}$ usaremos regresi
 ```{r Regresión lineal para ajustar a H2 y H10}
 # Generamos los datos que deben ser ajustados
 legendre.g2.dat = t(sapply(legendre.X, function(x){ sapply(seq(1,2), function(n){x^n}) }))
-legendre.g10.dat = t(sapply(legendre.X, function(x){ sapply(seq(2,10), function(n){x^n}) }))
+legendre.g10.dat = t(sapply(legendre.X, function(x){ sapply(seq(1,10), function(n){x^n}) }))
 
 # Ajustamos con regresión lineal
 legendre.g2.pesos <- regresLin(legendre.g2.dat, legendre.Y)
 legendre.g10.pesos <- regresLin(legendre.g10.dat, legendre.Y)
 ```
 
-Podemos ver cómo se ajustan ambas funciones a los datos:
+Podemos ver cómo se ajustan ambas funciones $g_2$ y $g_{10}$ a la función objetivo $f$:
 
 ```{r}
 legendre.g2 <- function(x){
-  sum(sapply(seq(1,2), function(i){ legendre.g2.pesos[i] * x^i})) + legendre.g2.pesos[3]
+  l <- legendre.g2.pesos
+  return(l[3] + l[1]*x + l[2]*x^2)
 }
 
 legendre.g10 <- function(x){
-  sum(sapply(seq(1,9), function(i){ legendre.g10.pesos[i] * x^i})) + legendre.g10.pesos[10]
+  l <- legendre.g10.pesos
+  return(l[11] + l[1]*x + l[2]*x^2 + l[3]*x^3 + l[4]*x^4 + l[5]*x^5
+         + l[6]*x^6 + l[7]*x^7 + l[8]*x^8 + l[9]*x^9 + l[10]*x^10)
 }
 
-plot(legendre.X, legendre.Y, pch=20, col="blue")
+plot(legendre.X, legendre.Y, pch=20, col="coral", xlab="", ylab="", main="Ajuste")
+plot(legendre.f, -1, 1, col="darkolivegreen", lwd=1.5, add=T)
+plot(legendre.g2, -1, 1, col="red", lwd=1.5, add=T)
+plot(legendre.g10, -1, 1, col="blue", lwd=1.5, add=T)
 
-x <- seq(-1, 1, by=0.01)
-y <- sapply(x, legendre.g10)
-points(x,y,type="l")
+legend("bottomright", c(expression(f), expression(g[2]), expression(g[10])),
+       col=c("darkolivegreen", "red", "blue"), lwd=1.5)
+```
+
+Podemos estimar el error medio cuadrático fuera de la muestra con una muestra de test sin ruido:
+
+```{r Test sobreajuste}
+test.X = runif(50, -1, 1)
+leg.test.Y = sapply(test.X, legendre.f)
+
+g2.test.Y = sapply(test.X, legendre.g2)
+g10.test.Y = sapply(test.X, legendre.g10)
+
+sum((leg.test.Y - g2.test.Y)^2)/50
+sum((leg.test.Y - g10.test.Y)^2)/50
 ```
 
 
+### Apartado 1.b
+
+En este caso, el valor de $\sigma$ modela el ruido, de manera que este desciende si el valor es bajo y aumenta si es alto. La normalización trata de reducir la influencia de este ruido en la $f$.
+
+## Ejercicio 2 - Medida de sobreajuste
+
+Calculamos los errores
+
+### Apartado 2.1
+
+Es evidente que el ajuste con funciones de $\mathcal{H}_{10}$ es muchísimo más poderoso que el que podamos hacer con funciones de $\mathcal{H}_2$, debido a que el primero tiene muchos más grados de libertad que el último. Aun trabajando con datos ruidosos como los que tenemos entre manos, es claro que $g_{10}$ tendrá un error dentro de la muestra siempre menor al que pueda tener $g_2$. Por tanto, podemos afirmar que $\mathcal{H}_{10}$ ajusta mejor los datos *de la muestra* que $\mathcal{H}_{2}$.
+
+Sin embargo, lo que a nosotros nos interesa es el error *fuera* de la muestra, y es aquí donde se produce el sobreajuste: al haber ajustado la función a los datos ruidosos, como $\mathcal{H}_{10}$ es más flexible, con ella estamos aprendiendo muchísimo del ruido; como $\mathcal{H}_{2}$ es menos flexible, el ajuste a los datos de la muestra es peor pero puede comportarse mejor en puntos nuevos. De hecho, y en contraste con lo dicho en el párrafo anterior ---esto es, que normalmente $E_{in}(g_{10}) < E_{in}(g_2)$---, es muy posible que en el error fuera de la muestra la desigualdad se dé vuelta y tengamos $E_{out}(g_{10}) > E_{out}(g_2)$; es decir, $E_{out}(g_{10}) - E_{out}(g_2) > 0$.
+
+Este comportamiento es uno de los síntomas del sobreajuste, así que parece sensato tomar esa diferencia como medida de sobreajuste: cuando más grande ---en positivo--- sea, mayor será el sobreajuste.
