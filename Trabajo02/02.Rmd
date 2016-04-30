@@ -498,9 +498,17 @@ distance <- function(x,y){
 }
 
 RL.SGD <- function(datos, etiquetas, w_0 = c(0,0), eta = 0.01, tol= 0.01){
-  w.curr <- w_0
-
   iteraciones <- 0
+  n <- length(etiquetas)
+  
+  
+
+  # Definimos w como el vector inicial. Si tiene una posición más que
+  # el número de datos, lo dejamos como está; si no, añadimos un 0.
+  w.curr <- ifelse(length(w_0) == ncol(datos) + 1, w_0, c(w_0, 0))
+  
+  # Añadimos una columna de unos a los datos
+  datos <- cbind(datos, 1)
   
   while(iteraciones == 0 || distance(w.prev, w.curr) > tol){
     iteraciones <- iteraciones+1
@@ -515,17 +523,419 @@ RL.SGD <- function(datos, etiquetas, w_0 = c(0,0), eta = 0.01, tol= 0.01){
       dato <- datos[index,]
       etiq <- etiquetas[index]
       
-      g_t <- -(etiq*dato)/(1+exp(-etiq*w.curr*dato))
-      w.curr <- w.curr + eta*g_t
+      g_t <- -(etiq*dato)/(1+exp(etiq*w.curr%*%dato))
+      w.curr <- w.curr - eta*g_t
     }
     
     iteraciones <- iteraciones + 1
   }
-
-return(list("Pesos"=w.curr, "Iter"=iteraciones))
+  
+  return(list("Pesos"=w.curr, "Recta" = -c(w.curr[1], w.curr[3]) / w.curr[2], "Iter"=iteraciones))
 }
-
-regLog.res <- RL.SGD(regLog.datos, regLog.etiquetas)
-#abline(rev(regLog.res$Pesos), col="red")
 ```
 
+### Apartado 4.b
+
+Si hacemos la regresión logística sobre los datos generados anteriormente, podemos ver cómo de bien se ajusta la $g$ estimada a la $f$ objetivo:
+
+```{r Grafico RL}
+# Hacemos regresión
+regLog.res <- RL.SGD(regLog.datos, regLog.etiquetas)
+
+# Muestra etiquetada
+plot(regLog.datos, asp = 1, col = colores, pch = 20,
+     main="Regresión logística", xlab="", ylab="")
+
+# Función objetivo
+abline(rev(regLog.frontera), col="blue", lwd=1.75)
+# Función estimada
+abline(rev(regLog.res$Recta), col="coral", lwd=1.75)
+
+# Añadimos leyenda
+legend("bottomright", c("Función objetivo", "Función estimada"),
+       bg="white", col=c("blue", "coral"), lty=1, lwd=1.75)
+```
+
+Estimamos ahora $E_{out}$ usando una muestra de test de tamaño 10000, contando el número de puntos mal etiquetados:
+
+```{r Medit Eout RL}
+# Definimos la función estimada a partir del resultado obtenido
+regLog.g <- function(x, y){
+   return(y - regLog.res$Recta[1]*x - regLog.res$Recta[2])
+}
+
+# Definimos una función para generar muestras de tamaño tam en el
+# cuadrado intervalo X intervalo
+generar_muestra <- function(tam = 100, intervalo = c(-1,1)){
+
+    # Generamos la muestra uniforme
+    datos.muestra <- simula_unif(N = tam, dim = 2, rango = intervalo)
+
+    # Devolvemos una matriz con las x en la primera columna y las y en la segunda
+    return(matrix(unlist(datos.muestra), ncol = 2, byrow = T))
+}
+
+
+# Generamos una nueva muestra
+regLog.test <- generar_muestra(1000)
+
+# Generamos etiquetado con f de la nueva muestra
+regLog.test.etiq <- regLog.etiquetado(regLog.test[, 1], regLog.test[, 2])
+
+# Generamos etiquetado con g de la nueva muestra
+regLog.g.etiquetado <- generador_etiquetados(regLog.g)
+regLog.g.etiquetas <- regLog.g.etiquetado(regLog.test[, 1], regLog.test[, 2])
+
+# Calcula el número de muestras mal etiquetadas
+E_out <- sum(regLog.g.etiquetas != regLog.test.etiq) / nrow(regLog.test)
+```
+
+### Apartado 4.c
+
+```{r}
+# # medir_Eout <- function(etiquetado.objetivo, etiquetado.estimado){
+# medir_Eout <- function(muestra){
+#     # Genera un etiquetado aleatorio de la muestra
+#     f.etiquetado <- generar_etiquetado(muestra)
+# 
+#     # Estima la recta que mejor aproxima la clasificación usando regresión
+#     regresion <- Regress_Lin(muestra, f.etiquetado$Etiquetas)
+#     g.recta <- -c(regresion[1], regresion[3]) / regresion[2]
+# 
+#     # Define la función clasificadora estimada
+#     g <- function(x,y){
+#         y - g.recta[1]*x - g.recta[2]
+#     }
+# 
+#     # Generamos una nueva muestra
+#     test.muestra <- generar_muestra(1000)
+# 
+#     # Generamos etiquetado con f de la nueva muestra
+#     test.etiquetas <- f.etiquetado$Etiquetador(test.muestra[, 1], test.muestra[, 2])
+# 
+#     # Generamos etiquetado con g de la nueva muestra
+#     g.etiquetador <- generador_etiquetados(g)
+#     g.etiquetas <- g.etiquetador(test.muestra[, 1], test.muestra[, 2])
+# 
+#     # Calcula el número de muestras mal etiquetadas
+#     E_out <- sum(g.etiquetas != test.etiquetas)
+# 
+#     # Devuelve el porcentaje de error fuera de la muestra
+#     return(E_out / nrow(test.muestra))
+# }
+# 
+# ## ----3.7.b - Analisis----------------------------------------------------
+# # Generamos una muestra aleatoria de tamaño 100
+# reg.muestra <- generar_muestra(100)
+# 
+# # Definimos el número de repiticiones
+# num_rep <- 1000
+# 
+# # Repetimos el experimento num_rep veces y tomamos la media de los valores devueltos
+# E_out <- sum(replicate(num_rep, medir_Eout(reg.muestra))) / num_rep
+# 
+# ## ----3.7.b - Salida---------------------------
+# mensaje <- paste("EJERCICIO 3.7.b: Error medio fuera de la muestra tras", num_rep, "repeticiones:", E_out * 100, "%")
+# print(mensaje)
+```
+
+## Ejercicio 5 - Clasificación de dígitos
+
+Cargamos los datos del fichero con `read.table()`. Así, tenemos en `digitos` una matriz cuyas filas son las instancias de los datos de entrenamiento. Cada fila tiene en su primera posición el dígito del que se trata, así que filtramos con ese dato y nos quedamos con los unos y los cincos:
+
+```{r Lectura de dígitos}
+# Leemos el fichero de entrenamiento
+digitos.train <- read.table("datos/zip.train")
+
+# Leemos el fichero de test
+digitos.test <- read.table("datos/zip.test")
+
+# Nos quedamos únicamente con los números 1 y 5
+digitos.train <- digitos.train[ is.element(digitos.train[,1], c(1,5)), ]
+digitos.test <- digitos.test[ is.element(digitos.test[,1], c(1,5)), ]
+```
+
+```{r 5 - Pausa, eval=FALSE, include=FALSE}
+# Pausa antes de proseguir
+pausa()
+```
+
+Para el cálculo de la intensidad media y la simetría se ha usado la función de la anterior práctica, que recibe una instancia de los digitos como parámetro y calcula la intensidad media de los valores y la simetría, obteniendo la diferencia entre la matriz original y la que tiene sus columnas invertidas:
+
+```{r Ánalisis dígitos}
+# Análisis de la intensidad y la simetría de los dígitos.
+analisis_digito <- function(digito){
+    digito <- as.numeric(digito)
+    numero <- matrix(digito[-1], nrow = 16)
+    numero.inv <- numero[, ncol(numero):1]
+    
+    intensidad <- mean(digito)
+    simetria <- -sum( abs(numero.inv - numero) )
+    
+    c(head(digito, 1), intensidad, simetria)
+}
+```
+
+Esta función devuelve un vector concatenando la etiqueta del número, su intensidad media y su valor de simetría.
+
+Recordemos el aspecto que tenían nuestros datos, tanto los de entrenamiento como los de test:
+
+```{r Plot de simetria-intensidad de dígitos}
+# Analizamos las filas de la matriz dígitos
+digitos.analisis.train <- t(apply(digitos.train, 1, analisis_digito))
+digitos.analisis.test <- t(apply(digitos.test, 1, analisis_digito))
+
+# Generamos un vector de colores basado en las etiquetas
+colores.train <- ifelse(digitos.analisis.train[, 1] == 1, "green", "red")
+colores.test <- ifelse(digitos.analisis.test[, 1] == 1, "green", "red")
+
+# Tomamos el rango máximo de ambos datos (train y test) para que las gráficas
+# tengan la misma escala
+limX <- range(c(digitos.analisis.train[,2], digitos.analisis.test[,2]))
+limY <- range(c(digitos.analisis.train[,3], digitos.analisis.test[,3]))
+
+# Definimos una rejilla 1x2 para los plots
+prev_par <- par(no.readonly = T)
+
+par(mfrow=c(1, 2), mar=c(5.0, 1.1, 2.1, 0.1), oma=2.5*c(1,1,1,1))
+
+# Generamos las gráficas
+plot(digitos.analisis.train[, 2:3], col = colores.train, pch = 20, cex=0.75,
+     main="Entrenamiento", xlab="Intensidad", yaxt="n", xlim = limX, ylim = limY)
+
+title(ylab="Simetría", mgp=c(1,1,10), line=0, cex.lab=1.2)
+
+plot(digitos.analisis.test[, 2:3], col = colores.test, pch = 20, cex=0.75,
+     main="Test", xlab="Intensidad", ylab="", yaxt="n", xlim = limX, ylim = limY)
+
+axis(4)
+mtext("", side=4, line=3)
+
+mtext("Intensidad-simetría", outer=TRUE, line=0.5, cex=1.5)
+
+# Dejamos los parámetros como estaban anteriormente
+par(prev_par)
+```
+
+Reutilizamos la regresión lineal y el algoritmo PLA Pocket de la práctica anterior:
+
+```{r Regresión lineal y PLA Pocket}
+# Necesario para llamar a la función ginv, que calcula la pseudo-inversa
+library(MASS)
+
+# Calcula regresión lineal
+regresLin <- function(datos, label){
+    # Añadimos una columna de 1 a los datos
+    X <- cbind(datos, 1)
+    Y <- label
+    
+    # Calculamos la descomposición de X
+    SVD <- svd(X)
+    D <- diag(SVD$d)
+    U <- SVD$u
+    V <- SVD$v
+    
+    # Calculamos la inversa de X^tX 
+    XtX_inv <- V %*% ginv(D ** 2) %*% t(V)
+    X_pseudoinv <- XtX_inv %*% t(X)
+    
+    # Devolvemos la solución
+    return(X_pseudoinv %*% Y)
+}
+
+# Implementa el algoritmo Perceptron. Devuelve una lista con tres valores:
+# Coefs: Pesos
+# Sol: Recta solución
+# Iter: Número de iteraciones que han sido necesarias
+PLA <- function(datos, label, vini, max_iter = 100){
+    
+    # Definimos w como el vector inicial. Si tiene una posición más que
+    # el número de datos, lo dejamos como está; si no, añadimos un 0.
+    w <- ifelse(length(vini) == ncol(datos) + 1, vini, c(vini, 0))
+    
+    # Variables usadas en el bucle
+    changing <- T
+    iteraciones <- 0
+    
+    # Añadimos una columna de unos a los datos
+    datos <- cbind(datos, 1)
+    
+    # Inicializamos el número de errores al total de datos recibidos
+    mejor_error <- length(datos[,1])
+    mejor_solucion <- w
+    
+    # Bucle principal, del que salimos si no ha habido cambios tras una
+    # pasada completa a los datos (solución encontrada) o si se ha llegado
+    # al máximo de iteraciones permitidas (solución no encontrada)
+    while(changing && iteraciones < max_iter){
+        iteraciones <- iteraciones+1
+        
+        changing <- F
+        
+        # Bucle sobre toda la muestra
+        for(index in seq(label)){
+            dato <- datos[index,]
+            etiq <- label[index]
+
+            # Comportamiento principal: si la muestra está mal etiquetada,
+            # recalcular el hiperplano para etiquetarla bien.
+            if(sign(sum(w * dato)) != etiq) {
+                w <- w + etiq*dato
+                changing <- T
+            }
+        }
+        
+        # Definimos la recta generada por los pesos
+        recta <- -c(w[1], w[3]) / w[2]
+
+        # Etiquetamos la muestra con la nueva recta
+        nuevo_etiquetado <- generador_etiquetados(function(x, y){ y - recta[1]*x - recta[2] })
+        nuevas_etiquetas <- nuevo_etiquetado(datos[,1], datos[,2])
+    
+        # Calculamos el número de muestras mal etiquetadas con la recta actual
+        error_actual <- sum(nuevas_etiquetas != label)
+
+        # Si el error actual es mejor que el mejor encontrado hasta ahora, guardamos
+        # los pesos actuales y actualizamos el mejor error
+        if(error_actual < mejor_error){
+            mejor_error <- error_actual
+            mejor_solucion <- w
+        }
+    }
+    
+    # Actualizamos w con la mejor solución
+    w <- mejor_solucion
+    
+    # Devolvemos los pesos, el vector (a,b), coeficientes que determinan la
+    # recta y = ax + b y el número de iteraciones.
+    return(list(Coefs = w, Recta = -c(w[1], w[3]) / w[2], Iter = iteraciones))
+}
+```
+
+Podemos ya hacer la regresión lineal seguida del algoritmo PLA Pocket:
+
+```{r Regresión lineal para clasificación}
+# Preparamos los datos
+digitos.train.data <- digitos.analisis.train[,2:3]
+digitos.train.etiq <- ifelse(digitos.analisis.train[,1] == 1, 1, -1)
+
+digitos.test.data <- digitos.analisis.test[,2:3]
+digitos.test.etiq <- ifelse(digitos.analisis.test[,1] == 1, 1, -1)
+
+# Hacemos regresión lineal
+digitos.reg <- regresLin(digitos.train.data, digitos.train.etiq)
+
+# Usamos el resultado de la regresión como valor inicial para el PLA Pocket
+digitos.pla <- PLA(digitos.train.data, digitos.train.etiq, vini = digitos.reg)
+```
+
+### Apartado 5.a
+
+Visualicemos la función $g$ estimada junto con los datos de test y los de entrenamiento:
+
+```{r Datos con función estimada}
+# Definimos una rejilla 1x2 para los plots
+prev_par <- par(no.readonly = T)
+
+par(mfrow=c(1, 2), mar=c(5.0, 1.1, 2.1, 0.1), oma=2.5*c(1,1,1,1))
+
+# Generamos las gráficas
+plot(digitos.analisis.train[, 2:3], col = colores.train, pch = 20, cex=0.75,
+     main="Entrenamiento", xlab="Intensidad", yaxt="n", xlim=limX, ylim=limY)
+abline(rev(digitos.pla$Recta), col="blue")
+
+title(ylab="Simetría", mgp=c(1,1,10), line=0, cex.lab=1.2)
+
+plot(digitos.analisis.test[, 2:3], col = colores.test, pch = 20, cex=0.75,
+     main="Test", xlab="Intensidad", ylab="", yaxt="n", xlim=limX, ylim=limY)
+abline(rev(digitos.pla$Recta), col="blue")
+
+axis(4)
+mtext("", side=4, line=3)
+
+mtext("Intensidad-simetría", outer=TRUE, line=0.5, cex=1.5)
+
+# Dejamos los parámetros como estaban anteriormente
+par(prev_par)
+```
+
+### Apartado 5.b
+
+Hacemos el cálculo de $E_{in}$ y $E_{test}$:
+
+```{r Cálculo Ein y Etest}
+digitos.g <- function(x, y){
+   return(y - digitos.pla$Recta[1]*x - digitos.pla$Recta[2])
+}
+
+digitos.g.etiquetado <- generador_etiquetados(digitos.g)
+
+digitos.g.train.etiq <- digitos.g.etiquetado(digitos.train.data[,1], digitos.train.data[,2])
+digitos.g.test.etiq <- digitos.g.etiquetado(digitos.test.data[,1], digitos.test.data[,2])
+
+
+E_in <- sum(digitos.g.train.etiq != digitos.train.etiq) / length(digitos.train.etiq)
+E_test <- sum(digitos.g.test.etiq != digitos.test.etiq) / length(digitos.test.etiq)
+```
+
+Los errores obtenidos, $E_{in} = `r I(E_in*100)`$% y $E_{test} = `r I(E_test*100)`$% son excelentes, y nos dan una idea de lo bueno que este análisis: los datos son linealmente separables y un método sencillo como el de regresión lineal junto con PLA consiguen grandes resultados.
+
+### Apartado 5.c
+
+```{r, include=FALSE}
+N <- nrow(digitos.train.data)
+delta <- 0.05
+dVC <- 3
+E_out.in <- E_in + sqrt((8/N) * log((4*(2*N)^dVC+4)/delta))
+
+N <- nrow(digitos.test.data)
+delta <- 0.05
+epsilon = sqrt(-log(delta/2)/(2*nrow(digitos.test.data)))
+E_out.test <- E_test + epsilon
+```
+
+
+Para obtener la cota de $E_{out}$ basada en $E_{in}$ podemos usar la cota de generalización de Vapnik-Chervonenkis, que afirma que para todo $\delta > 0$:
+
+$$
+E_{out}(g) \leq E_{in}(g) + \sqrt{\frac{8}{N}ln\left(\frac{4m_{\mathcal{H}}(2N)}{\delta}\right)} = E_{in}(g) + \sqrt{\frac{8}{N}ln\left(\frac{4(2N)^{d_{VC}} + 4}{\delta}\right)}
+$$
+
+En este caso, la tolerancia es de $\delta = 0.05$, el número de muestras es $N = `r I(nrow(digitos.train.data))`$ y la dimensión de Vapnik-Chervonenkis es $d_{VC} = 3$, ya que estamos separando muestras bidimensionales con una recta. Teniendo todo esto en cuenta, y que $E_{in} = `r I(E_in)`$, podemos acotar el error fuera de la muestra como sigue:
+
+$$
+E_{out}(g) \leq `r I(E_out.in)`
+$$
+
+Esto es, el error fuera de la muestra es como mucho de un `r I(ceiling(E_out.in*100))`%.
+
+Para estudiar una cota del error fuera de la muestra basada en el error en la muestra de test, podemos usar la desigualdad de Hoeffding:
+
+$$
+P(\vert E_{test}(g) - E_{out}(g) \vert > \varepsilon) \leq 2 e^{-2N\varepsilon^2}
+$$
+
+Como queremos estudiar cómo de parecidos son ambos errores, vamos a igualar la parte de la derecha de la desigualdad a $\delta = 0.05$, de manera que despejando el $\varepsilon$ sabremos, con un 95% de seguridad, que $E_{out} \leq E_{test}(g) + \varepsilon$.
+
+Por tanto:
+
+$$
+\begin{aligned}
+2 e^{-2N\varepsilon^2} &= \delta \\
+e^{-2N\varepsilon^2} &= \frac{\delta}{2} \\
+-2N \varepsilon^2 &= ln(\frac{\delta}{2}) \\
+\varepsilon &= \sqrt{-\frac{ln(\frac{\delta}{2})}{2N}}
+\end{aligned}
+$$
+
+Tomando $N = `r I(nrow(digitos.test.data))`$ y $\delta = 0.05$, obtenemos que $\varepsilon = `r I(epsilon)`$; es decir:
+
+$$
+E_{out} \leq E_{test}(g) + \varepsilon = `r I(E_out.test)`
+$$
+
+Hemos conseguido así una cota mejor del error fuera de la muestra, ya que ahora tenemos que es como mucho de un `r I(ceiling(E_out.test*100))`%.
+
+# Sobreajuste
+
+## Ejercicio 1 - Sobreajuste
