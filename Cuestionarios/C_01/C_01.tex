@@ -445,6 +445,11 @@
         Con cada uno de estos conjuntos podemos calcular $g^{\mathcal{D}_n}(x)$; esto es, la pendiente y punto de corte con el eje vertical de la recta obtenida con los dos puntos de $\mathcal{D}_n$. Por \ref{eq:barg}, basta luego tomar la media de las pendientes y de los puntos de corte y reconstruir así $\bar{g}(x)$.
     \end{solucion}
 
+    \begin{align*}
+    \frac{Var(e_1)}{Var(E_{cv})} &= \frac{Var(e_1)}{Var(\frac{1}{N}\sum_{i=1}^N e_i)} = \frac{Var(e_1)}{\frac{1}{N^2}\sum_{i=1}^NVar(e_i)}\\
+    &= N^2\frac{Var(e_1)}{\sum_{i=1}^NVar(e_i)} \approx N^2\frac{Var(e_1)}{N Var(e_1)} = N
+    \end{align*}
+
     \nocite{*}
 
 % -------------------------- Bibliografía ------------------------

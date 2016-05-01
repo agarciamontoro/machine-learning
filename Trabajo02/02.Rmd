@@ -9,6 +9,7 @@ output: pdf_document
 knitr::opts_chunk$set(echo = TRUE)
 library(knitr)
 library(numDeriv)
+set.seed(19921201)
 ```
 
 # Modelos lineales
@@ -502,7 +503,6 @@ RL.SGD <- function(datos, etiquetas, w_0 = c(0,0), eta = 0.01, tol= 0.01){
   n <- length(etiquetas)
   
   
-  
   # Definimos w como el vector inicial. Si tiene una posición más que
   # el número de datos, lo dejamos como está; si no, añadimos un 0.
   w.curr <- ifelse(length(w_0) == ncol(datos) + 1, w_0, c(w_0, 0))
@@ -526,8 +526,6 @@ RL.SGD <- function(datos, etiquetas, w_0 = c(0,0), eta = 0.01, tol= 0.01){
       g_t <- -(etiq*dato)/(1+exp(etiq*w.curr%*%dato))
       w.curr <- w.curr - eta*g_t
     }
-    
-    iteraciones <- iteraciones + 1
   }
   
   return(list("Pesos"=w.curr, "Recta" = -c(w.curr[1], w.curr[3]) / w.curr[2], "Iter"=iteraciones))
@@ -1142,10 +1140,10 @@ sigma <- 0.5
 reg.X <- simula_gauss(N, d, sd = 1)
 
 # Generamos los pesos
-reg.W <- simula_gauss(N, d+1, sd = 1)
+reg.W <- simula_gauss(1, d+1, sd = 1)
 
 # Definimos las etiquetas
-reg.Y <- sapply(1:N, function(i){ reg.W[i,] %*% c(reg.X[i,],1) }) + sigma * rnorm(N)
+reg.Y <- sapply(1:N, function(i){ reg.W %*% c(reg.X[i,],1) }) + sigma * rnorm(N)
 
 # Definimos el parametro de regularizacion
 reg.lambda <- 0.05 / N
@@ -1157,12 +1155,12 @@ Estimamos ahora $w_f$ con $w_{reg}$ usando regularización *weight decay*:
 # Regresión lineal con weight decay
 weightDecay <- function(X,Y, lambda){
   # Calculamos Z, su traspuesta y la diagonal lambda*I
-  Z <- t(cbind(X,1))
+  Z <- cbind(X,1)
   Zt <- t(Z)
   lambdaI <- diag(lambda, ncol(Z))
   
   # Calculamos la solución
-  w <- t(solve(Zt %*% Z + lambdaI) %*% Zt) %*% Y
+  w <- solve(Zt %*% Z + lambdaI) %*% Zt %*% Y
   
   return(w)
 }
@@ -1172,9 +1170,171 @@ reg.Wreg <- weightDecay(reg.X, reg.Y, reg.lambda)
 
 ### Apartado 1.a
 
-Definimos los valores de $N$ como se nos indica y calculamos, para cada uno de ellos, los `N` errores con la técnica del *leave-one-out*:
+Definimos los valores de $N$ como se nos indica e implementamos una función que, dado $N$, devuelve un vector con los errores de *leaev-one-out* $e_1, e_2, \dots, e_N$:
 
 ```{r Leave-one-out}
+valoresN <- seq(d+15, d+115, by = 10)
 
+# Definimos una función para medir e_{loo}; es decir, el error usando
+# leave-one-out con el conjunto de test = {x_{loo}}
+errorLOO <- function(loo, N, X, Y, lambda){
+  indices <- setdiff(1:N, loo)
+  
+  Wreg <- weightDecay(X[indices,], Y[indices], lambda)
+  
+  return((Y[loo] - (t(Wreg) %*% c(X[loo,],1)))^2)
+}
+  
+
+# Devuelve un vector con los errores e_i, con i \in {1, ..., N}
+medirErrores <- function(N, numLambda = 0.05){
+  # Generamos la muestra
+  X <- simula_gauss(N, d, sd = 1)
+  
+  # Generamos los pesos
+  W <- simula_gauss(1, d+1, sd = 1)
+  
+  # Definimos las etiquetas
+  Y <- sapply(1:N, function(i){ W %*% c(X[i,],1) }) + sigma * rnorm(N)
+    
+  # Definimos el parametro de regularización
+  lambda <- numLambda / N
+
+  # Devolvemos todos los e_i
+  return(sapply(1:N, errorLOO, N, X, Y, lambda))
+}
 ```
 
+Podemos ya medir los errores $e_1, \dots, e_{N_i}$ para $N_i \in \{d+15, d+25, \dots, d+115\}$ y obtener sus medias, $E_{cv_i}$ y visualizar los errores medios para cada $N_i$:
+
+```{r}
+# Medimos los errores e_i y calculamos su media E_{cv}
+errores <- sapply(valoresN, medirErrores)
+erroresMedios <- sapply(errores, mean)
+
+# Generamos gráfico de barras
+barplot(erroresMedios,col = "darkolivegreen", names.arg=valoresN,
+        xlab = "Valor de N", ylab = expression(E[cv]),
+        main=expression(Error~medio~E[cv]))
+```
+
+### Apartado 1.b
+
+Vamos a definir una función que devuelva, del experimento anterior, la media y varianza de $e_1$, $e_2$ y $E_{cv}$. La ejecutamos 1000 veces para obtener una matriz en cuyas fila $i$ se encuentran los resultados del experimento $i$-ésimo:
+
+```{r Repetición del experimento 1000 veces}
+experimento <- function(N, numLambda = 0.05){
+  # Medimos los errores e_i y calculamos su media E_{cv}
+  e_i <- replicate(1000, medirErrores(N, numLambda))
+  E_cv <- apply(e_i, 2, mean)
+
+  e1 <- e_i[1,]
+  e2 <- e_i[2,]
+
+  return(c(mean(e1), mean(e2), mean(E_cv), var(e1), var(e2), var(E_cv)))
+}
+
+exp.res <- t(sapply(valoresN, experimento))
+colnames(exp.res)  <- c("MediaE_1", "MediaE_2", "MediaE_cv", "VarE_1", "VarE_2", "VarE_cv")
+rownames(exp.res) <- c(valoresN)
+```
+
+La siguienta tabla resume los valores de medias y varianzas de cada uno de los errores medidos para cada $N \in \{18, 28, 38, \dots, 118\}$:
+```{r Tabla experimento, echo=FALSE}
+kable(exp.res)
+```
+
+Podemos ver también cómo se comportan estos valores dibujando su valor con respecto al $N$:
+
+```{r Gráfico de las medias}
+# Definimos una rejilla 1x3 para los plots
+prev_par <- par(no.readonly = T)
+
+par(mfrow=c(1, 3), mar=c(0.1, 0.1, 2.1, 0.1), oma=2.5*c(1,1,1,1))
+
+yrange = range(exp.res)
+
+plot(exp.res[,"MediaE_1"], type='l', col="red", lwd=1.75, main=expression(E[1]), ylim = yrange)
+lines(exp.res[,"VarE_1"], type='l', col="blue", lwd=1.75)
+
+plot(exp.res[,"MediaE_2"], type='l', col="red", lwd=1.75, main=expression(E[2]), ylim = yrange, yaxt="n")
+lines(exp.res[,"VarE_2"], type='l', col="blue", lwd=1.75)
+
+plot(exp.res[,"MediaE_cv"], type='l', col="red", lwd=1.75, main=expression(E[cv]), ylim = yrange, yaxt="n")
+lines(exp.res[,"VarE_cv"], type='l', col="blue", lwd=1.75)
+
+mtext("Errores de la validación cruzada", outer=TRUE, line=0.5)
+
+legend("right", c("Media", "Varianza"),
+       bg="white", col=c("red", "blue"), lty=1, lwd=1.75)
+
+# Dejamos los parámetros como estaban anteriormente
+par(prev_par)
+```
+
+
+### Apartado 1.c
+
+Los valores medios de $e_1$, $e_2$ y $E_{cv}$ deben ser muy parecidos: cada $e_i$ se calculando eliminando uno y sólo uno de los datos de entrenamiento, luego este valor y la media global de todos los $e_i$ debe ser parecida, como así se muestra en los datos obtenidos en el anterior experimento.
+
+### Apartado 1.d
+
+De la misma manera que las medias son muy similares entre los $e_i$ y el $E_{cv}$, es claro que la varianza en el último es muchísimo más pequeña que en los primeros. La causa de la baja varianza del último está clara: los datos de cada experimento están tomados de una $\mathcal{N}(0,1)$, luego de forma global el error va a ser siempre parecido, y únicamente dependiente de lo bueno que es el modelo y cómo de bien ajusta los datos. Sin embargo, las varianzas de los $e_1$ y $e_2$ van a ser siempre superiores: cada $e_i$ reprenseta el error de la muestra $i$-ésima con respecto a lo aprendido de las demás; esto es muy dependiente de la muestra en cuestión, del ruido y de cómo se ajusta el modelo a ese punto concreto. Es evidente que el modelo puede ajustarse bien de forma global pero no en todos y cada uno de los puntos, y esto es lo que contribuye a la mayor varianza de los $e_i$ aislados.
+
+### Apartado 1.e
+
+Si los errores de validación cruzada fueran independientes, la varianza de los $e_i$ y de $E_{cv}$ debería ser similar. No es así porque en realidad los $e_i$ no son independientes: en el cálculo de $e_i$ se usa la muestra $(x_j, y_j)$ como entrenamiento, mientras que para el cálculo de $e_j$ estamos usando justo esa muestra como test; en definitiva, los errores individuales no son independientes. Podríamos conseguir que fueran individuales calculando cada $e_i$ con una muestra de puntos completamente diferente, pero esto es inviable en la práctica. Esta situación nos lleva, por tanto, a que las varianzas sean muy distintas, al contrario de lo que debería pasar si los $e_i$ fueran independientes.
+
+### Apartado 1.f
+
+Si desarrollamos el cociente descrito veremos que el número de muestras $N_{eff}$ es precisamente $N$:
+
+$$
+\begin{aligned}
+    \frac{Var(e_1)}{Var(E_{cv})} &= \frac{Var(e_1)}{Var(\frac{1}{N}\sum_{i=1}^N e_i)} = \frac{Var(e_1)}{\frac{1}{N^2}\sum_{i=1}^NVar(e_i)}\\
+    &= N^2\frac{Var(e_1)}{\sum_{i=1}^NVar(e_i)} \approx N^2\frac{Var(e_1)}{N Var(e_1)} = N
+\end{aligned}
+$$
+
+donde hemos usado que los errores $e_i$ deben ser variables i.i.d. ---en este caso sabemos que no son totalmente independientes, por lo explicado en el anterior apartado, así que hemos notado esa igualdad como una aproximación--- luego deben tener la misma varianza.
+
+El desarrollo matemático anterior prueba entonces que este cociente modela el número de muestras nuevas usadas en el cálculo de $E_{cv}$.
+
+Podemos comprobar de forma experimentalmente que la teoría es cierta:
+
+```{r Gráfica Neff}
+calcularNeff <- function(datos){
+  Neff <- datos[,"VarE_1"] / datos[,"VarE_cv"]
+  
+  plot(valoresN, 100*Neff/valoresN, ylim=c(0,115), pch=20, cex=1.5, col="darkolivegreen",
+       xlab="Valores de N", ylab = "Porcentaje")
+  abline(c(mean(100*Neff/valoresN),0), col = "red")
+  
+  legend('bottomright',c('Media', expression(N[eff]/N)),
+         lty=c(1,NA), pch=c(NA,20),
+         col=c("red", "darkolivegreen"))
+  
+  return(mean(100*Neff/valoresN))
+}
+
+exp.res.Neff <- calcularNeff(exp.res)
+```
+
+Vemos que el porcentaje de $N_{eff}$ con respecto a $N$ es de un `r I(exp.res.Neff)`%.
+
+### Apartado 1.e
+
+Al aumentar el parámetro de regularización lo que hacemos es relajar el ajuste a los datos de la muestra para intentar mejorar el error fuera de ella. Sin embargo, si lo aumentamos mucho, el error de cada uno de los datos por separado va a oscilar demasiado ---el ajuste a cada punto es más flexible---; por otro lado, el error medio de validación cruzada va a quedarse más o menos estable, así que la varianza se mantendrá también estable.
+
+Como el número de muestras efectivas lo hemos tomado como el cociente $N_{eff} = \frac{Var(e_1)}{Var(E_{cv})}$ y acabamos de ver que el numerador aumenta y el denominador se queda fijo, $N_{eff}$ aumentará cuando aumentemos el parámetro de regularización $\lambda$.
+
+Repetimos el experimento tomando $\lambda = \frac{2.5}{N}$:
+
+```{r Repetición del experimento 1000 veces con nuevo lambda}
+exp.res.2.5 <- t(sapply(valoresN, experimento, 2.5))
+colnames(exp.res.2.5)  <- c("MediaE_1", "MediaE_2", "MediaE_cv", "VarE_1", "VarE_2", "VarE_cv")
+rownames(exp.res.2.5) <- c(valoresN)
+exp.res.2.5.Neff <- calcularNeff(exp.res.2.5)
+```
+
+Comprobamos así, corroborando el argumento anterior, que el porcentaje de $N_{eff}$ con respecto a $N$ con $\lambda = \frac{2.5}{N}$ es de un `r I(exp.res.2.5.Neff)`%, `r I(exp.res.2.5.Neff - exp.res.Neff)` puntos mejor que el anterior.
