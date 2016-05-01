@@ -940,7 +940,7 @@ Hemos conseguido así una cota mejor del error fuera de la muestra, ya que ahora
 
 ## Ejercicio 1 - Sobreajuste
 
-Lo primero que vamos a hacer es definir una función para calcular el polinomio de Legendre de orden $k$ en el punto x:
+Lo primero que vamos a hacer es definir una función para calcular el polinomio de Legendre de orden $k$ en el punto x. Se han implementado dos versiones: una recursiva, más compacta y elegante, y una iterativa, mucho más eficiente, y con la que trabajaremos a lo largo de este ejercicio. Veamos el código de ambas:
 
 ```{r Definición de polinomios de Legendre}
 # Definición recursiva del polinomio de Legendre de orden k en el punto x
@@ -955,36 +955,40 @@ legendre <- function(k, x){
     return(L_k)
   }
 }
-# 
-# 
-# legendre <- function(k,x){
-#   res = c(1,x)
-#   d = 3
-#   while(d <= k+1){
-#     print(d)
-#     res[d] = ((2*d - 1) / d) * x * res[d-1] - ((d - 1) / d) * res[d-2]
-#     d <- d+1
-#   }
-#   return(res[k+1])
-# }
+
+# Definición iterativa (menos elegante pero mucho más eficiente) del pol. de Legendre
+legendre <- function(k,x){
+  res = c(1,x)
+  d = 3
+  
+  while(d <= k+1){
+    res[d] = ((2*(d-1) - 1) / (d-1)) * x * res[d-1] - (((d-1) - 1) / (d-1)) * res[d-2]
+    d <- d+1
+  }
+  
+  return(res[k+1])
+}
 ```
 
 Podemos comprobar que todo ha salido bien haciendo una gráfica de los primeros 10 polinomios de Legendre, que podemos comparar con una de los numerosos gráficos iguales que se pueden encontrar en la literatura que cubre este tema:
 
 ```{r Gráfico bonito}
-f <- function(x){
-  legendre(0,x)
+x <- seq(-1,1,by=0.001)
+
+f <- function(x, k){
+  legendre(k,x)
 }
-plot(f, -1, 1, lwd=1.5, xlim=c(-1,1), ylim=c(-1,1), main="10 primeros polinomios de Legendre")
+
+y <- sapply(x, f, 0)
+plot(x,y, type='l', lwd=1.5, xlim=c(-1,1), ylim=c(-1,1), main="10 primeros polinomios de Legendre")
 
 colores <- rainbow(10)
 
 for (k in seq(10)) {
-  f <- function(x){
-    legendre(k,x)
-  }
   color <- rgb(runif(1,0,1),runif(1,0,1),runif(1,0,1))
-  plot(f, -1, 1, col=colores[k], lwd=1.5, xlim=c(-1,1), ylim=c(-1,1), add=T)
+  
+  y <- sapply(x, f, k)
+  points(x,y, type='l', col=color, lwd=1.5, xlim=c(-1,1), ylim=c(-1,1))
 }
 ```
 
@@ -1046,7 +1050,7 @@ legendre.g10 <- function(x){
 }
 
 plot(legendre.X, legendre.Y, pch=20, col="coral", xlab="", ylab="", main="Ajuste")
-plot(legendre.f, -1, 1, col="darkolivegreen", lwd=1.5, add=T)
+points(x, sapply(x,legendre.f), col="darkolivegreen", type='l', lwd=1.5)
 plot(legendre.g2, -1, 1, col="red", lwd=1.5, add=T)
 plot(legendre.g10, -1, 1, col="blue", lwd=1.5, add=T)
 
@@ -1067,7 +1071,7 @@ Eout.g2 <- sum((leg.test.Y - g2.test.Y)^2)/100
 Eout.g10 <- sum((leg.test.Y - g10.test.Y)^2)/100
 ```
 
-En este caso, estimamos que los errores fuera de la muestra son $E_{out}(g_2) \approx `r I(100*Eout.g2)`$% y $E_{out}(g_{10}) \approx `r I(100*Eout.g10)`$%.
+En este caso, estimamos que el error cuadrático medio fuera de la muestra es $E_{out}(g_2) \approx `r I(Eout.g2)`$ y $E_{out}(g_{10}) \approx `r I(Eout.g10)`$.
 
 ### Apartado 1.b
 
@@ -1102,16 +1106,75 @@ Repetimos ahora el experimento 100 veces con muestras de tamaño $m = 50$, tanto
 
 ```{r Experimento para medir error}
 # TODO: Poner 1 a 100 y 5 a 50
-Eout.g2 <- mean(replicate(1,medirEout(5, legendre.g2)))
-Eout.g10 <- mean(replicate(1,medirEout(5, legendre.g10)))
+Eout.g2 <- mean(replicate(100,medirEout(50, legendre.g2)))
+Eout.g10 <- mean(replicate(100,medirEout(50, legendre.g10)))
 ```
 
 Vemos que el error cuadrático medio con $g_2$ es de $E_{out}(g_2) = `r I(Eout.g2)`$ y, con $g_{10}$, de $E_{out}(g_{10}) = `r I(Eout.g10)`$. El sobreajuste es más que evidente tras estos experimentos.
 
-### Apartado 2.1
+### Apartado 2.a
 
 Es evidente que el ajuste con funciones de $\mathcal{H}_{10}$ es muchísimo más poderoso que el que podamos hacer con funciones de $\mathcal{H}_2$, debido a que el primero tiene muchos más grados de libertad que el último. Aun trabajando con datos ruidosos como los que tenemos entre manos, es claro que $g_{10}$ tendrá un error dentro de la muestra siempre menor al que pueda tener $g_2$. Por tanto, podemos afirmar que $\mathcal{H}_{10}$ ajusta mejor los datos *de la muestra* que $\mathcal{H}_{2}$.
 
 Sin embargo, lo que a nosotros nos interesa es el error *fuera* de la muestra, y es aquí donde se produce el sobreajuste: al haber ajustado la función a los datos ruidosos, como $\mathcal{H}_{10}$ es más flexible, con ella estamos aprendiendo muchísimo del ruido; como $\mathcal{H}_{2}$ es menos flexible, el ajuste a los datos de la muestra es peor pero puede comportarse mejor en puntos nuevos. De hecho, y en contraste con lo dicho en el párrafo anterior ---esto es, que normalmente $E_{in}(g_{10}) < E_{in}(g_2)$---, es muy posible que en el error fuera de la muestra la desigualdad se dé vuelta y tengamos $E_{out}(g_{10}) > E_{out}(g_2)$; es decir, $E_{out}(g_{10}) - E_{out}(g_2) > 0$.
 
 Este comportamiento es uno de los síntomas del sobreajuste, así que parece sensato tomar esa diferencia como medida de sobreajuste: cuando más grande ---en positivo--- sea, mayor será el sobreajuste.
+
+# Regularización y selección de modelos
+
+## Ejercicio 1 - Estudio
+
+Fijamos el número de muestras $N = 100$, la dimensión $d = 3$ y generamos el conjunto de datos que se nos pide, reutilizando la función `simula_gauss` implementada en la primera práctica
+
+```{r Generación de datos}
+# Devuelve una lista de N vectores de dimensión dim con una muestra
+# gaussiana de media cero y desviación sigma
+simula_gauss <- function(N, dim, sd_){
+    t(sapply(rep(dim, N), rnorm, mean = 0, sd = sd_))
+}
+
+# Fijamos las constantes del experimento
+N <- 100
+d <- 3
+sigma <- 0.5
+
+# Generamos la muestra
+reg.X <- simula_gauss(N, d, sd = 1)
+
+# Generamos los pesos
+reg.W <- simula_gauss(N, d+1, sd = 1)
+
+# Definimos las etiquetas
+reg.Y <- sapply(1:N, function(i){ reg.W[i,] %*% c(reg.X[i,],1) }) + sigma * rnorm(N)
+
+# Definimos el parametro de regularizacion
+reg.lambda <- 0.05 / N
+```
+
+Estimamos ahora $w_f$ con $w_{reg}$ usando regularización *weight decay*:
+
+```{r Weight decay}
+# Regresión lineal con weight decay
+weightDecay <- function(X,Y, lambda){
+  # Calculamos Z, su traspuesta y la diagonal lambda*I
+  Z <- t(cbind(X,1))
+  Zt <- t(Z)
+  lambdaI <- diag(lambda, ncol(Z))
+  
+  # Calculamos la solución
+  w <- t(solve(Zt %*% Z + lambdaI) %*% Zt) %*% Y
+  
+  return(w)
+}
+
+reg.Wreg <- weightDecay(reg.X, reg.Y, reg.lambda)
+```
+
+### Apartado 1.a
+
+Definimos los valores de $N$ como se nos indica y calculamos, para cada uno de ellos, los `N` errores con la técnica del *leave-one-out*:
+
+```{r Leave-one-out}
+
+```
+
