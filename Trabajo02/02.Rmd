@@ -415,7 +415,7 @@ prev_par <- par(no.readonly = T)
 
 par(mfrow=c(2, 2), mar=c(0.1, 1.1, 2.1, 0.1), oma=2.5*c(1,1,1,1))
 
- # . <- lapply(puntosIniciales, dibujarComparacion)
+# . <- lapply(puntosIniciales, dibujarComparacion)
 dibujarComparacion(0.1, xaxt="n")
 dibujarComparacion(1, xaxt="n", yaxt="n")
 dibujarComparacion(-0.5)
@@ -438,26 +438,26 @@ Para este ejercicio vamos a reusar código de la práctica anterior:
 
 ```{r Reusando código}
 simula_unif <- function(N, dim, rango){
-    lapply(rep(dim, N), runif, min = rango[1], max = rango[2])
+  lapply(rep(dim, N), runif, min = rango[1], max = rango[2])
 }
 
 simula_recta <- function(intervalo){
-    # Simulamos dos puntos dentro del cuadrado intervalo x intervalo
-    punto1 <- runif(2, min=intervalo[1], max=intervalo[2])
-    punto2 <- runif(2, min=intervalo[1], max=intervalo[2])
-
-    # Generamos los parámetros que definen la recta
-    a <- (punto2[2] - punto1[2]) / (punto2[1] - punto1[1])
-    b <- -a * punto1[1] + punto1[2]
-
-    # Devolvemos un vector concatenando ambos parámetros
-    c(a,b)
+  # Simulamos dos puntos dentro del cuadrado intervalo x intervalo
+  punto1 <- runif(2, min=intervalo[1], max=intervalo[2])
+  punto2 <- runif(2, min=intervalo[1], max=intervalo[2])
+  
+  # Generamos los parámetros que definen la recta
+  a <- (punto2[2] - punto1[2]) / (punto2[1] - punto1[1])
+  b <- -a * punto1[1] + punto1[2]
+  
+  # Devolvemos un vector concatenando ambos parámetros
+  c(a,b)
 }
 
 generador_etiquetados <- function(f){
-    function(x,y){
-        sign(f(x,y))
-    }
+  function(x,y){
+    sign(f(x,y))
+  }
 }
 ```
 
@@ -469,7 +469,7 @@ datos <- simula_unif(100, 2, c(-1,1))
 regLog.datos <- matrix(unlist(datos), ncol = 2, byrow = T)
 
 regLog.f <- function(x,y){
-    y - regLog.frontera[1]*x - regLog.frontera[2]
+  y - regLog.frontera[1]*x - regLog.frontera[2]
 }
 ```
 
@@ -502,7 +502,7 @@ RL.SGD <- function(datos, etiquetas, w_0 = c(0,0), eta = 0.01, tol= 0.01){
   n <- length(etiquetas)
   
   
-
+  
   # Definimos w como el vector inicial. Si tiene una posición más que
   # el número de datos, lo dejamos como está; si no, añadimos un 0.
   w.curr <- ifelse(length(w_0) == ncol(datos) + 1, w_0, c(w_0, 0))
@@ -561,18 +561,18 @@ Estimamos ahora $E_{out}$ usando una muestra de test de tamaño 10000, contando 
 ```{r Medit Eout RL}
 # Definimos la función estimada a partir del resultado obtenido
 regLog.g <- function(x, y){
-   return(y - regLog.res$Recta[1]*x - regLog.res$Recta[2])
+  return(y - regLog.res$Recta[1]*x - regLog.res$Recta[2])
 }
 
 # Definimos una función para generar muestras de tamaño tam en el
 # cuadrado intervalo X intervalo
 generar_muestra <- function(tam = 100, intervalo = c(-1,1)){
-
-    # Generamos la muestra uniforme
-    datos.muestra <- simula_unif(N = tam, dim = 2, rango = intervalo)
-
-    # Devolvemos una matriz con las x en la primera columna y las y en la segunda
-    return(matrix(unlist(datos.muestra), ncol = 2, byrow = T))
+  
+  # Generamos la muestra uniforme
+  datos.muestra <- simula_unif(N = tam, dim = 2, rango = intervalo)
+  
+  # Devolvemos una matriz con las x en la primera columna y las y en la segunda
+  return(matrix(unlist(datos.muestra), ncol = 2, byrow = T))
 }
 
 
@@ -665,14 +665,14 @@ Para el cálculo de la intensidad media y la simetría se ha usado la función d
 ```{r Ánalisis dígitos}
 # Análisis de la intensidad y la simetría de los dígitos.
 analisis_digito <- function(digito){
-    digito <- as.numeric(digito)
-    numero <- matrix(digito[-1], nrow = 16)
-    numero.inv <- numero[, ncol(numero):1]
-    
-    intensidad <- mean(digito)
-    simetria <- -sum( abs(numero.inv - numero) )
-    
-    c(head(digito, 1), intensidad, simetria)
+  digito <- as.numeric(digito)
+  numero <- matrix(digito[-1], nrow = 16)
+  numero.inv <- numero[, ncol(numero):1]
+  
+  intensidad <- mean(digito)
+  simetria <- -sum( abs(numero.inv - numero) )
+  
+  c(head(digito, 1), intensidad, simetria)
 }
 ```
 
@@ -725,22 +725,22 @@ library(MASS)
 
 # Calcula regresión lineal
 regresLin <- function(datos, label){
-    # Añadimos una columna de 1 a los datos
-    X <- cbind(datos, 1)
-    Y <- label
-    
-    # Calculamos la descomposición de X
-    SVD <- svd(X)
-    D <- diag(SVD$d)
-    U <- SVD$u
-    V <- SVD$v
-    
-    # Calculamos la inversa de X^tX 
-    XtX_inv <- V %*% ginv(D ** 2) %*% t(V)
-    X_pseudoinv <- XtX_inv %*% t(X)
-    
-    # Devolvemos la solución
-    return(X_pseudoinv %*% Y)
+  # Añadimos una columna de 1 a los datos
+  X <- cbind(datos, 1)
+  Y <- label
+  
+  # Calculamos la descomposición de X
+  SVD <- svd(X)
+  D <- diag(SVD$d)
+  U <- SVD$u
+  V <- SVD$v
+  
+  # Calculamos la inversa de X^tX 
+  XtX_inv <- V %*% ginv(D ** 2) %*% t(V)
+  X_pseudoinv <- XtX_inv %*% t(X)
+  
+  # Devolvemos la solución
+  return(X_pseudoinv %*% Y)
 }
 
 # Implementa el algoritmo Perceptron. Devuelve una lista con tres valores:
@@ -748,67 +748,67 @@ regresLin <- function(datos, label){
 # Sol: Recta solución
 # Iter: Número de iteraciones que han sido necesarias
 PLA <- function(datos, label, vini, max_iter = 100){
+  
+  # Definimos w como el vector inicial. Si tiene una posición más que
+  # el número de datos, lo dejamos como está; si no, añadimos un 0.
+  w <- ifelse(length(vini) == ncol(datos) + 1, vini, c(vini, 0))
+  
+  # Variables usadas en el bucle
+  changing <- T
+  iteraciones <- 0
+  
+  # Añadimos una columna de unos a los datos
+  datos <- cbind(datos, 1)
+  
+  # Inicializamos el número de errores al total de datos recibidos
+  mejor_error <- length(datos[,1])
+  mejor_solucion <- w
+  
+  # Bucle principal, del que salimos si no ha habido cambios tras una
+  # pasada completa a los datos (solución encontrada) o si se ha llegado
+  # al máximo de iteraciones permitidas (solución no encontrada)
+  while(changing && iteraciones < max_iter){
+    iteraciones <- iteraciones+1
     
-    # Definimos w como el vector inicial. Si tiene una posición más que
-    # el número de datos, lo dejamos como está; si no, añadimos un 0.
-    w <- ifelse(length(vini) == ncol(datos) + 1, vini, c(vini, 0))
+    changing <- F
     
-    # Variables usadas en el bucle
-    changing <- T
-    iteraciones <- 0
-    
-    # Añadimos una columna de unos a los datos
-    datos <- cbind(datos, 1)
-    
-    # Inicializamos el número de errores al total de datos recibidos
-    mejor_error <- length(datos[,1])
-    mejor_solucion <- w
-    
-    # Bucle principal, del que salimos si no ha habido cambios tras una
-    # pasada completa a los datos (solución encontrada) o si se ha llegado
-    # al máximo de iteraciones permitidas (solución no encontrada)
-    while(changing && iteraciones < max_iter){
-        iteraciones <- iteraciones+1
-        
-        changing <- F
-        
-        # Bucle sobre toda la muestra
-        for(index in seq(label)){
-            dato <- datos[index,]
-            etiq <- label[index]
-
-            # Comportamiento principal: si la muestra está mal etiquetada,
-            # recalcular el hiperplano para etiquetarla bien.
-            if(sign(sum(w * dato)) != etiq) {
-                w <- w + etiq*dato
-                changing <- T
-            }
-        }
-        
-        # Definimos la recta generada por los pesos
-        recta <- -c(w[1], w[3]) / w[2]
-
-        # Etiquetamos la muestra con la nueva recta
-        nuevo_etiquetado <- generador_etiquetados(function(x, y){ y - recta[1]*x - recta[2] })
-        nuevas_etiquetas <- nuevo_etiquetado(datos[,1], datos[,2])
-    
-        # Calculamos el número de muestras mal etiquetadas con la recta actual
-        error_actual <- sum(nuevas_etiquetas != label)
-
-        # Si el error actual es mejor que el mejor encontrado hasta ahora, guardamos
-        # los pesos actuales y actualizamos el mejor error
-        if(error_actual < mejor_error){
-            mejor_error <- error_actual
-            mejor_solucion <- w
-        }
+    # Bucle sobre toda la muestra
+    for(index in seq(label)){
+      dato <- datos[index,]
+      etiq <- label[index]
+      
+      # Comportamiento principal: si la muestra está mal etiquetada,
+      # recalcular el hiperplano para etiquetarla bien.
+      if(sign(sum(w * dato)) != etiq) {
+        w <- w + etiq*dato
+        changing <- T
+      }
     }
     
-    # Actualizamos w con la mejor solución
-    w <- mejor_solucion
+    # Definimos la recta generada por los pesos
+    recta <- -c(w[1], w[3]) / w[2]
     
-    # Devolvemos los pesos, el vector (a,b), coeficientes que determinan la
-    # recta y = ax + b y el número de iteraciones.
-    return(list(Coefs = w, Recta = -c(w[1], w[3]) / w[2], Iter = iteraciones))
+    # Etiquetamos la muestra con la nueva recta
+    nuevo_etiquetado <- generador_etiquetados(function(x, y){ y - recta[1]*x - recta[2] })
+    nuevas_etiquetas <- nuevo_etiquetado(datos[,1], datos[,2])
+    
+    # Calculamos el número de muestras mal etiquetadas con la recta actual
+    error_actual <- sum(nuevas_etiquetas != label)
+    
+    # Si el error actual es mejor que el mejor encontrado hasta ahora, guardamos
+    # los pesos actuales y actualizamos el mejor error
+    if(error_actual < mejor_error){
+      mejor_error <- error_actual
+      mejor_solucion <- w
+    }
+  }
+  
+  # Actualizamos w con la mejor solución
+  w <- mejor_solucion
+  
+  # Devolvemos los pesos, el vector (a,b), coeficientes que determinan la
+  # recta y = ax + b y el número de iteraciones.
+  return(list(Coefs = w, Recta = -c(w[1], w[3]) / w[2], Iter = iteraciones))
 }
 ```
 
@@ -865,7 +865,7 @@ Hacemos el cálculo de $E_{in}$ y $E_{test}$:
 
 ```{r Cálculo Ein y Etest}
 digitos.g <- function(x, y){
-   return(y - digitos.pla$Recta[1]*x - digitos.pla$Recta[2])
+  return(y - digitos.pla$Recta[1]*x - digitos.pla$Recta[2])
 }
 
 digitos.g.etiquetado <- generador_etiquetados(digitos.g)
@@ -955,11 +955,23 @@ legendre <- function(k, x){
     return(L_k)
   }
 }
+# 
+# 
+# legendre <- function(k,x){
+#   res = c(1,x)
+#   d = 3
+#   while(d <= k+1){
+#     print(d)
+#     res[d] = ((2*d - 1) / d) * x * res[d-1] - ((d - 1) / d) * res[d-2]
+#     d <- d+1
+#   }
+#   return(res[k+1])
+# }
 ```
 
 Podemos comprobar que todo ha salido bien haciendo una gráfica de los primeros 10 polinomios de Legendre, que podemos comparar con una de los numerosos gráficos iguales que se pueden encontrar en la literatura que cubre este tema:
 
-```{r}
+```{r Gráfico bonito}
 f <- function(x){
   legendre(0,x)
 }
@@ -989,14 +1001,14 @@ Generamos los coeficientes $a_q$:
 ```{r Generación de coeficientes}
 
 # Generamos los coeficientes normalizados
-a_q <- rnorm(N+1) / sqrt(sum(sapply(seq(0,Qf), function(q){1 / (2*q + 1)})))
+a_q <- rnorm(Qf+1) / sqrt(sum(sapply(seq(0,Qf), function(q){1 / (2*q + 1)})))
 
 legendre.f <- function(x){
   res <- 0
   for (q in seq(0,Qf)) {
     res <- res + a_q[q+1] * legendre(q,x)
   }
-  
+
   return(res)
 }
 
@@ -1010,7 +1022,7 @@ legendre.Y = sapply(legendre.X, legendre.f) + sigma*legendre.eps
 Para ajustar los datos a $\mathcal{H}_2$ y a $\mathcal{H}_{10}$ usaremos regresión lineal; buscamos así los coeficientes de los polinomios de segundo y décimo grado, respectivamente, que ajustan mejor los datos:
 
 ```{r Regresión lineal para ajustar a H2 y H10}
-# Generamos los datos que deben ser ajustados
+# Aplicamos las transformaciones a los datos para ajustarlos a polinomios de grado 2 y 10
 legendre.g2.dat = t(sapply(legendre.X, function(x){ sapply(seq(1,2), function(n){x^n}) }))
 legendre.g10.dat = t(sapply(legendre.X, function(x){ sapply(seq(1,10), function(n){x^n}) }))
 
@@ -1042,19 +1054,20 @@ legend("bottomright", c(expression(f), expression(g[2]), expression(g[10])),
        col=c("darkolivegreen", "red", "blue"), lwd=1.5)
 ```
 
-Podemos estimar el error medio cuadrático fuera de la muestra con una muestra de test sin ruido:
+Podemos estimar el error cuadrático medio fuera de la muestra midiendo el error en una muestra de test sin ruido:
 
 ```{r Test sobreajuste}
-test.X = runif(50, -1, 1)
+test.X = runif(100, -1, 1)
 leg.test.Y = sapply(test.X, legendre.f)
 
 g2.test.Y = sapply(test.X, legendre.g2)
 g10.test.Y = sapply(test.X, legendre.g10)
 
-sum((leg.test.Y - g2.test.Y)^2)/50
-sum((leg.test.Y - g10.test.Y)^2)/50
+Eout.g2 <- sum((leg.test.Y - g2.test.Y)^2)/100
+Eout.g10 <- sum((leg.test.Y - g10.test.Y)^2)/100
 ```
 
+En este caso, estimamos que los errores fuera de la muestra son $E_{out}(g_2) \approx `r I(100*Eout.g2)`$% y $E_{out}(g_{10}) \approx `r I(100*Eout.g10)`$%.
 
 ### Apartado 1.b
 
@@ -1062,7 +1075,38 @@ En este caso, el valor de $\sigma$ modela el ruido, de manera que este desciende
 
 ## Ejercicio 2 - Medida de sobreajuste
 
-Calculamos los errores
+Vamos a definir ahora una función para medir el error en una muestra de tamaño $m$ de las funciones estimadas $g_2$ y $g_{10}$:
+
+```{r Error fuera de la muestra polinomios}
+# m : Tamaño de la muestra de test
+# g : Función estimada
+medirEout <- function(m, g){
+  # Generamos una nueva muestra de tamaño m
+  test.X = runif(m, -1, 1)
+  
+  # Generamos los datos reales
+  test.f.Y = sapply(test.X, legendre.f)
+  
+  
+  # Generamos los datos estimados
+  test.g.Y = sapply(test.X, g)
+  
+  # Medimos el error cuadrático medio
+  Eout <- sum((test.f.Y - test.g.Y)^2)/m
+  
+  return(Eout)
+}
+```
+
+Repetimos ahora el experimento 100 veces con muestras de tamaño $m = 50$, tanto con $g_2$ como con $g_{10}$:
+
+```{r Experimento para medir error}
+# TODO: Poner 1 a 100 y 5 a 50
+Eout.g2 <- mean(replicate(1,medirEout(5, legendre.g2)))
+Eout.g10 <- mean(replicate(1,medirEout(5, legendre.g10)))
+```
+
+Vemos que el error cuadrático medio con $g_2$ es de $E_{out}(g_2) = `r I(Eout.g2)`$ y, con $g_{10}$, de $E_{out}(g_{10}) = `r I(Eout.g10)`$. El sobreajuste es más que evidente tras estos experimentos.
 
 ### Apartado 2.1
 
