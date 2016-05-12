@@ -1,0 +1,138 @@
+\documentclass[a4paper, 11pt]{article}
+\usepackage[cuestionario=2]{estilo}
+
+\begin{document}
+
+    \maketitle
+
+    \section{Ejercicios}
+
+
+      \begin{ejercicio}
+        Sean $x$ e $y$ dos vectores de observaciones de tamaño $N$. Sea
+        \[
+        \operatorname{cov}(x,y)=\frac{1}{N}\sum_{i=1}^N (x_i-\bar{x})(y_i-\bar{y})
+        \]
+        la covarianza de dichos vectores, donde $\bar{z}$ representa el valor medio de los elementos de $z$. Considere ahora una matriz $X$ cuyas columnas representan vectores de observaciones. La matriz de covarianzas asociada a la matriz $X$ es el conjunto de covarianzas definidas por cada dos de sus vectores columnas. Defina la expresión matricial que expresa la matriz $\operatorname{cov}(X)$ en función de la matriz $X$.
+      \end{ejercicio}
+
+      \begin{solucion}
+        ss
+      \end{solucion}
+
+      \begin{ejercicio}
+        Considerar la matriz hat definida en regresión,  $H = X(X^TX)^{-1}X^T$, donde $X$ es una matriz  $N \times (d+1)$ y $X^TX$ es invertible.
+        \begin{enumerate}
+            \item Mostrar que H es simétrica
+            \item Mostrar que $H^K=H$ para cualquier entero $K$.
+        \end{enumerate}
+      \end{ejercicio}
+
+      \begin{solucion}
+        d
+      \end{solucion}
+
+      \begin{ejercicio}
+        Resolver el siguiente problema: Encontrar el punto $(x_0,y_0)$ sobre la línea $ax+by+d=0$ que este más cerca del punto $(x_1,y_1)$.
+        %
+        \item Consideremos el problema de optimización lineal con restricciones definido por
+
+        \[
+        \min_z \{c^Tz\} \textrm{ sujeto a } Az \leq b
+        \]
+        donde $c$ y $b$ son vectores y A es una matriz.
+
+             \begin{enumerate}
+                \item Para un conjunto de datos linealmente separable mostrar que para algún $w$ se debe de verificar la condición  $y_n w^T x_n > 0$ para todo $(x_n,y_n)$ del conjunto.
+                \item Formular un problema de programación lineal que resuelva el problema de la búsqueda del hiperplano separador. Es decir, identifique quiénes son A, \textbf{z}, \textbf{b} y \textbf{c} para este caso.
+            \end{enumerate}
+      \end{ejercicio}
+
+      \begin{solucion}
+        d
+      \end{solucion}
+
+      \begin{ejercicio}
+        Probar que en el caso general de funciones con ruido se verifica que $\mathbb{E}_{\mathcal{D}}[E_{out}]= \sigma^2+\texttt{\textbf{bias}}+\texttt{\textbf{var}}$ ---ver transparencias de clase---.
+      \end{ejercicio}
+
+      \begin{solucion}
+        cd
+      \end{solucion}
+
+      \begin{ejercicio}
+        \item  Consideremos las mismas condiciones generales del enunciado del ejercicio 2 del apartado de Regresión de la relación de ejercicios 2.
+        Considerar ahora $\sigma=0.1$ y $d=8$, ¿cuál es el más pequeño tamaño muestral que resultará en un valor esperado de $E_{in}$ mayor de $0.008$?.
+      \end{ejercicio}
+
+
+      \begin{solucion}
+        b
+      \end{solucion}
+
+      \begin{ejercicio}
+        En regresión logística mostrar que
+        \[
+        \nabla E_{in}(w)=-\frac{1}{N}\sum_{n=1}^{N}\frac{y_nx_n}{1+e^{y_nw^Tx_n}}= \frac{1}{N}\sum_{n=1}^{N}-y_nx_n\sigma(-y_nw^Tx_n)
+        \]
+
+        Argumentar que un ejemplo mal clasificado contribuye al gradiente más que un ejemplo bien clasificado.
+      \end{ejercicio}
+
+      \begin{solucion}
+        c
+      \end{solucion}
+
+      \begin{ejercicio}
+        Definamos el error en un punto $(x_n,y_n)$ por
+          \[
+          e_n(w)=\max(0,-y_nw^Tx_n)
+          \]
+          Argumentar que el algoritmo PLA puede interpretarse como SGD sobre $e_n$ con tasa de aprendizaje $\nu=1$.
+      \end{ejercicio}
+
+      \begin{solucion}
+        asdffg
+      \end{solucion}
+
+      \begin{ejercicio}
+        El ruido determinista depende de $\mathcal{H}$, ya que algunos modelos aproximan mejor $f$ que otros.
+        \begin{enumerate}
+            \item Suponer que $\mathcal{H}$ es fija y que incrementamos la complejidad de $f$.
+            \item Suponer que $f$ es fija y decrementamos la complejidad de $\mathcal{H}$
+        \end{enumerate}
+        Contestar para ambos escenarios: ¿En general subirá o bajará el ruido determinista? ¿La tendencia a sobrejaustar será mayor o menor? Ayuda: analizar los detalles que influencian el sobreajuste.
+      \end{ejercicio}
+
+      \begin{solucion}
+        dfasdf
+      \end{solucion}
+
+
+      \begin{ejercicio}
+        La técnica de regularización de Tikhonov es bastante general al usar la condición
+        \[
+        wt\Gamma^T\Gamma w \leq C
+        \]
+        que define relaciones entre las $w_i$ ---la matriz $\Gamma_i$ se denomina regularizador de Tikhonov---.
+        \begin{enumerate}
+        \item Calcular $\Gamma$ cuando $\sum_{q=0}^Q w_q^2 \leq C$
+        \item Calcular $\Gamma$ cuando $(\sum_{q=0}^Q w_q)^2 \leq C$
+        \end{enumerate}
+        Argumentar si el estudio de los regularizadores de Tikhonov puede hacerse a través de las propiedades algebraicas de las matrices $\Gamma$.
+      \end{ejercicio}
+
+
+    \section{Bonus}
+
+    \begin{bonus}
+      Considerar la matriz hat $H = X(X^TX)^{-1}X^T$. Sea $X$ una matriz  $N \times (d+1)$ y $X^TX$ invertible. Mostrar que $\operatorname{traza}(H)=d+1$, donde $\operatorname{traza}$ significa la suma de los elementos de la diagonal principal. (+1 punto)
+    \end{bonus}
+
+    \nocite{*}
+
+% -------------------------- Bibliografía ------------------------
+\bibliographystyle{babplain}
+\bibliography{C_01}
+
+\end{document}
