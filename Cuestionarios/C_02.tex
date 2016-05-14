@@ -76,7 +76,7 @@
           \[
           ax + by + d = 0
           \]
-          donde suponemos $a$,$b$ y $d$ conocidos y no nulos.
+          donde suponemos $a$,$b$ y $d$ conocidos y tales que $a \neq 0$ y $b \neq 0$.
 
           El lagrangiano de este problema es el siguiente:
           \[
@@ -98,18 +98,18 @@
 
           Despejando lambda de la primera ecuación, de donde obtenemos que $\lambda = \frac{2(x-x_1)}{a}$, y sustituyendo en la segunda, tenemos lo siguiente:
           \begin{align*}
-              y-y_1 &= \frac{b}{a} (x-x_1) \\
+              y-y_1 &= \frac{b}{a} (x-x_1) \comment{Usamos que $a \neq 0$}\\
               ax + by + d &= 0
           \end{align*}
 
           Despejamos, por ejemplo, $y$ de la primera ecuación, de donde obtenemos $y = y_1 + \frac{b}{a} (x-x_1)$, y sustituimos en la segunda, de donde podemos obtener ya el valor de $x$:
           \begin{align*}
-              ax + b (y_1 + \frac{b}{a} (x-x_1)) + d = 0 \\
-              ax + by_1 + \frac{b^2}{a}x - \frac{b^2}{a}x_1 + d = 0 \\
-              x = \frac{-by_1 + \frac{b^2}{a}x_1 - d}{a + \frac{b^2}{a}}
+              &ax + b (y_1 + \frac{b}{a} (x-x_1)) + d = 0 \\
+              &ax + by_1 + \frac{b^2}{a}x - \frac{b^2}{a}x_1 + d = 0 \\
+              &x = \frac{-by_1 + \frac{b^2}{a}x_1 - d}{a + \frac{b^2}{a}} \comment{Usamos que $b \neq 0$}
           \end{align*}
 
-          Sustituynedo por último en la ecuación que teníamos para $y$, obtenemos que el punto $(x_0,y_0)$ sobre la línea $ax+by+d=0$ que está más cerca del $(x_1,y_1)$ es:
+          Sustituyendo por último en la ecuación que teníamos para $y$, obtenemos que el punto $(x_0,y_0)$ sobre la línea $ax+by+d=0$ que está más cerca del $(x_1,y_1)$ es:
           \[
           (x_0,y_0) = (\frac{-by_1 + \frac{b^2}{a}x_1 - d}{a + \frac{b^2}{a}}, y_1 + \frac{b}{a} (\frac{-by_1 + \frac{b^2}{a}x_1 - d}{a + \frac{b^2}{a}}-x_1))
           \]
@@ -298,6 +298,11 @@
 
         Teniendo en cuenta la definición del ruido determinista, es claro que en el primer escenario este subirá. Al tener un modelo fijo de funciones que intentan aproximar una función $f$ cada vez más compleja, la complejidad que el modelo es incapaz de ajustar terminará actuando como ruido. Por tanto, el sobreajuste será mayor: el aumento de ruido, ya sea determinista o estocástico ---el modelo no sabe de qué tipo es el ruido, ni siquiera si lo hay---, siempre influye en el sobreajuste.
 
+        El segundo escenario es algo diferente. Si bien la primera pregunta tiene la misma respuesta, ya que la complejidad de la función objetivo será mayor que la de la clase de funciones que intenta ajustarla y, por tanto el ruido determinista va a aumentar, en el caso del sobreajuste el comportamiento no es tan claro.
+
+        Sabemos que el sobreajuste ocurre cuando un modelo intenta aproximar una función objetivo de tal manera que llega a ajustar el ruido ---ya sea este estocástico o determinista---. Sin embargo, para que esto ocurra, el modelo debe tener los suficientes grados de libertad como para aprender del ruido. Si el modelo es más simple, intentará siempre ajustarse al comportamiento general de la muestra y, aunque el error dentro de ella sea mayor que con modelos más complejos, la falta de libertad puede influir positivamente en el error fuera de la muestra: al haber captado el comportamiento general y no haber podido aprender del ruido ---por falta de libertad, no porque este no exista---, el error fuera de la muestra puede ser mejor que con modelos más complejos, cuyos grados de libertad terminarán influyendo negativamente.
+
+        Por tanto, podemos concluir que al intentar ajustar una misma función objetivo con modelos cada vez más simples, la tendencia a sobreajustar será menor.
 
       \end{solucion}
 
