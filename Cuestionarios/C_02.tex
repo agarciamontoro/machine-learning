@@ -29,12 +29,94 @@
       \end{ejercicio}
 
       \begin{solucion}
-        d
+          Decir que $H$ es simétrica es equivalente a decir que es igual a su traspuesta. Por tanto, nos basta comprobar que $H^T = H$. Comprobémoslo:
+          \begin{align*}
+              H^T &= \left(X \left(X^TX\right)^{-1} X^T\right)^T = (X^T)^T \left(\left(X^TX\right)^{-1}\right)^T X^T = \\
+              &= X \left(\left(X^TX\right)^T\right)^{-1} X^T = X \left(X^T \left(X^T\right)^T\right)^{-1} X^T = \\
+              &= X (X^T X)^{-1} X^T = H
+          \end{align*}
+      \end{solucion}
+      donde hemos usado las siguientes propiedades de la traspuesta: $(AB)^T = B^T A^T$, $(A^T)^{-1} = (A^{-1})^T$ y $(A^T)^T = A$.
+
+      Para ver que $H^K = H$ para cualquier entero $K$, vamos primero a estudiar el cuadrado de $H$:
+      \begin{align*}
+          H^2 &= \left( X(X^TX)^{-1}X^T \right) \left( X(X^TX)^{-1}X^T \right) = \\
+          &= X(X^TX)^{-1} \left( (X^T X)(X^TX)^{-1}  \right)X^T = \\
+          &= X(X^TX)^{-1}I_{d+1}X^T = X(X^TX)^{-1}X^T = \\
+          &= H
+      \end{align*}
+      donde hemos denotado como $I_{d+1}$ a la matriz identidad de dimensión $d+1$.
+
+      Tenemos así que $H^2 = H$. Ahora basta aplicar inducción para terminar el razonamiento:
+      \begin{itemize}
+          \item Para el caso base $K=2$ está probado: $H^2 = H$.
+          \item Lo suponemos cierto para $K-1$; esto es, $H^{K-1} = H$.
+          \item Lo vemos para $K$, donde usamos la hipótesis de inducción primero y el caso base después:
+          \[
+          H^K = H^{K-1}H = HH = H^2 = H
+          \]
+      \end{itemize}
+
+      Concluimos así que $H^K = H$ para todo $K$.
+
+      \begin{ejercicio}
+        Resolver el siguiente problema: Encontrar el punto $(x_0,y_0)$ sobre la línea $ax+by+d=0$ que esté más cerca del punto $(x_1,y_1)$.
+      \end{ejercicio}
+
+      \begin{solucion}
+          Estamos ante un problema de minimización con restricciones, así que vamos a usar la técnica de los multiplicadores de Lagrange para resolverlo.
+
+          La función a minimizar es la siguiente:
+          \[
+          g(x,y) = d((x,y),(x_1,y_1)) = \sqrt{(x-x_1)^2 + (y-y_1)^2}
+          \]
+          Como lo que nos interesa es el punto donde se alcanza el mínimo y no el valor de la función en ese punto, podemos considerar como función a minimizar el cuadrado de $g$, lo que nos facilitará los cálculos más adelante.
+
+          La restricción es la siguiente:
+          \[
+          ax + by + d = 0
+          \]
+          donde suponemos $a$,$b$ y $d$ conocidos y no nulos.
+
+          El lagrangiano de este problema es el siguiente:
+          \[
+          \mathcal{L}(x,y,\lambda) = (x-x_1)^2 + (y-y_1)^2 - \lambda(ax + by + d)
+          \]
+          cuyas derivadas parciales son:
+          \begin{align*}
+              \frac{\partial}{\partial x} \mathcal{L}(x,y,\lambda) &= 2(x-x_1) -\lambda a \\
+              \frac{\partial}{\partial y} \mathcal{L}(x,y,\lambda) &= 2(y-y_1) -\lambda b \\
+              \frac{\partial}{\partial \lambda} \mathcal{L}(x,y,\lambda) &= - (ax + by + d)
+          \end{align*}
+
+          Igualando las tres derivadas parciales a cero obtenemos el sistema de tres ecuaciones con tres incógnitas ---a saber, $x$, $y$ y $\lambda$--- que tenemos que resolver:
+          \begin{align*}
+              2(x-x_1) = \lambda a \\
+              2(y-y_1) = \lambda b \\
+              ax + by + d = 0
+          \end{align*}
+
+          Despejando lambda de la primera ecuación, de donde obtenemos que $\lambda = \frac{2(x-x_1)}{a}$, y sustituyendo en la segunda, tenemos lo siguiente:
+          \begin{align*}
+              y-y_1 &= \frac{b}{a} (x-x_1) \\
+              ax + by + d &= 0
+          \end{align*}
+
+          Despejamos, por ejemplo, $y$ de la primera ecuación, de donde obtenemos $y = y_1 + \frac{b}{a} (x-x_1)$, y sustituimos en la segunda, de donde podemos obtener ya el valor de $x$:
+          \begin{align*}
+              ax + b (y_1 + \frac{b}{a} (x-x_1)) + d = 0 \\
+              ax + by_1 + \frac{b^2}{a}x - \frac{b^2}{a}x_1 + d = 0 \\
+              x = \frac{-by_1 + \frac{b^2}{a}x_1 - d}{a + \frac{b^2}{a}}
+          \end{align*}
+
+          Sustituynedo por último en la ecuación que teníamos para $y$, obtenemos que el punto $(x_0,y_0)$ sobre la línea $ax+by+d=0$ que está más cerca del $(x_1,y_1)$ es:
+          \[
+          (x_0,y_0) = (\frac{-by_1 + \frac{b^2}{a}x_1 - d}{a + \frac{b^2}{a}}, y_1 + \frac{b}{a} (\frac{-by_1 + \frac{b^2}{a}x_1 - d}{a + \frac{b^2}{a}}-x_1))
+          \]
+
       \end{solucion}
 
       \begin{ejercicio}
-        Resolver el siguiente problema: Encontrar el punto $(x_0,y_0)$ sobre la línea $ax+by+d=0$ que este más cerca del punto $(x_1,y_1)$.
-        %
         \item Consideremos el problema de optimización lineal con restricciones definido por
 
         \[
@@ -49,7 +131,9 @@
       \end{ejercicio}
 
       \begin{solucion}
-        d
+        Razonemos por reducción al absurdo: supongamos que para todo $w$ existe al menos algún $(x_n, y_n)$ tal que $y_nw^tx_n \leq 0$. Esta es la definición de conjunto no linealmente separable, ya que para cualquier hiperplano hay al menos una muestra mal clasificada. Esto entra en contradicción con la hipótesis de que el conjunto es linealmente separable, luego concluimos que existe un $w$ tal que $y_n w^t x_n < 0 \;\; \forall (x_n,y_n)$.
+
+        Para formular el problema de optimización lineal, tenemos que tener en cuenta que lo que queremos minimizar ---en el caso de un conjunto linealmente separable queremos que sea nulo--- es el error dentro de la muestra, $E_{in}(w)$
       \end{solucion}
 
       \begin{ejercicio}
@@ -57,7 +141,29 @@
       \end{ejercicio}
 
       \begin{solucion}
-        cd
+          En clase se vio esta fórmula para funciones con ruido. Vamos aquí reproducir aquel desarrollo usando esta vez una función con general con ruido
+          \[
+          y(x) = f(x) + \varepsilon
+          \]
+          donde $\varepsilon$ es una variable aleatoria de media cero y varianza $\sigma^2$ que modela el ruido. Veamos el desarrollo:
+
+          \begin{align*}
+              \mathbb{E}_\mathcal{D}[E_{out}] &= \mathbb{E}_\mathcal{D}[\mathbb{E}_x[(g^\mathcal{D}(x) - y(x))^2]] = \mathbb{E}_x[\mathbb{E}_\mathcal{D}[(g^\mathcal{D}(x) - y(x))^2]] = \\
+              &= \mathbb{E}_x[\mathbb{E}_\mathcal{D}[g^\mathcal{D}(x)^2] - 2\mathbb{E}_\mathcal{D}[g^\mathcal{D}(x)]y(x) + y(x)^2] = \\
+              &= \mathbb{E}_x[\mathbb{E}_\mathcal{D}[g^\mathcal{D}(x)^2] - 2\bar{g}(x)y(x) + y(x)^2] = \\
+              &= \mathbb{E}_x[\mathbb{E}_\mathcal{D}[g^\mathcal{D}(x)^2] - 2\bar{g}(x)f(x) -2\bar{g}(x)\varepsilon + y(x)^2] = \\
+              &= \mathbb{E}_x[\mathbb{E}_\mathcal{D}[g^\mathcal{D}(x)^2] - \bar{g}(x)^2 +\bar{g}(x)^2 - 2\bar{g}(x)f(x) -2\bar{g}(x)\varepsilon + y(x)^2] = \\
+              &= \mathbb{E}_x[\mathbb{E}_\mathcal{D}[(g^\mathcal{D}(x) - \bar{g}(x))^2] +\bar{g}(x)^2 - 2\bar{g}(x)f(x) -2\bar{g}(x)\varepsilon + y(x)^2] = \\
+              &= \mathbb{E}_x[\operatorname{var}(x) +\bar{g}(x)^2 - 2\bar{g}(x)f(x) -2\bar{g}(x)\varepsilon + y(x)^2] = \\
+              &= \mathbb{E}_x[\operatorname{var}(x) +\bar{g}(x)^2 - 2\bar{g}(x)f(x) -2\bar{g}(x)\varepsilon + f(x)^2 - 2f(x)\varepsilon + \varepsilon^2] = \\
+              &= \mathbb{E}_x[\operatorname{var}(x) +\bar{g}(x)^2 - 2\bar{g}(x)f(x) + f(x)^2 -2\bar{g}(x)\varepsilon - 2f(x)\varepsilon + \varepsilon^2] = \\
+              &= \mathbb{E}_x[\operatorname{var}(x) + \operatorname{bias}(x) -2\bar{g}(x)\varepsilon - 2f(x)\varepsilon + \varepsilon^2] = \\
+              &= \operatorname{var} + \operatorname{bias} + \mathbb{E}_x[-2\bar{g}(x)\varepsilon - 2f(x)\varepsilon + \varepsilon^2] = \\
+              &= \operatorname{var} + \operatorname{bias} - 2 \mathbb{E}_x[\bar{g}(x)]\mathbb{E}_x[\varepsilon] - 2\mathbb{E}_x[f(x)]\mathbb{E}_x[\varepsilon] + \mathbb{E}_x[\varepsilon^2] =\\
+              &= \operatorname{var} + \operatorname{bias} + \mathbb{E}_x[\varepsilon^2] =\\
+              &= \operatorname{var} + \operatorname{bias} + \sigma^2
+          \end{align*}
+          donde en la penúltima igualdad hemos usado que la media de la variable que modela el ruido es cero; es decir, que $\mathbb{E}_x[\varepsilon] = 0$ y, en la última, la definición de varianza; esto es: $\mathbb{E}_x[\varepsilon^2] = \mathbb{E}_x[(\varepsilon - 0)^2] = \mathbb{E}_x[(\varepsilon - \mathbb{E}_x[\varepsilon])^2] = \operatorname{var}(\varepsilon) = \sigma^2$.
       \end{solucion}
 
       \begin{ejercicio}
@@ -67,7 +173,25 @@
 
 
       \begin{solucion}
-        b
+        Sabemos, por el ejercicio citado, que el valor esperado de $E_{in}$ es:
+        \[
+        \mathbb{E}[E_{in}] = \sigma^2\left(1 - \frac{d+1}{N}\right)
+        \]
+
+        Si queremos que este valor sea mayor que $\varepsilon = 0.008$, basta imponerlo y despejar $N$ para ver qué tamaño muestral necesitamos:
+
+        \begin{align*}
+            \sigma^2\left(1 - \frac{d+1}{N}\right) &> \varepsilon \\
+            1 - \frac{d+1}{N} &> \frac{\varepsilon}{\sigma^2} \\
+            1 - \frac{\varepsilon}{\sigma^2} &> \frac{d+1}{N} \\
+            N \left(1 - \frac{\varepsilon}{\sigma^2}\right) &> d+1 \\
+            N &> \frac{d+1}{1 - \frac{\varepsilon}{\sigma^2}}
+        \end{align*}
+
+        Concluimos que el mínimo tamaño muestral para que el valor esperado de $E_{in}$ sea mayor que $\varepsilon$ es de $N = \ceil{\frac{d+1}{1 - \frac{\varepsilon}{\sigma^2}}}$. Sustituyendo los valores indicados, obtenemos que este número es:
+        \[
+        N = \ceil{\frac{8+1}{1 - \frac{0.008}{0.1^2}}} = 45
+        \]
       \end{solucion}
 
       \begin{ejercicio}
@@ -80,7 +204,31 @@
       \end{ejercicio}
 
       \begin{solucion}
-        c
+        En regresión logística, el error está definido como sigue:
+        \[
+        E_{in}(w) = \frac{1}{N}\sum_{n=0}^N\operatorname{ln}(1 + e^{-y_n w^T x_n})
+        \]
+
+        Por tanto, su gradiente es:
+        \begin{align*}
+            \nabla E_{in}(w) &= \frac{\partial}{\partial w} \left(\frac{1}{N}\sum_{n=0}^N\operatorname{ln}(1 + e^{-y_n w^T x_n})\right) = \\
+            &= \frac{1}{N}\sum_{n=0}^N\frac{\partial}{\partial w}\left(\operatorname{ln}(1 + e^{-y_n w^T x_n})\right) =\\
+            &= \frac{1}{N}\sum_{n=0}^N\frac{-y_n x_n e^{-y_n w^T x_n}}{1 + e^{-y_n w^T x_n}} = \comment{Multiplico por $\frac{e^{y_n w^T x_n}}{e^{y_n w^T x_n}}$} \\
+            &= \frac{1}{N}\sum_{n=0}^N\frac{-y_n x_n}{e^{y_n w^T x_n} + 1} = \comment{Func. logística: $\sigma(t) = \frac{1}{1+e^{-t}}$} \\
+            &= \frac{1}{N}\sum_{n=0}^N -y_n x_n \sigma(-y_n w^T x_n)
+        \end{align*}
+
+        Fijándonos en la penúltima igualdad,
+        \[
+        \nabla E_{in}(w) = \frac{1}{N}\sum_{n=0}^N\frac{-y_n x_n}{e^{y_n w^T x_n} + 1}
+        \] es claro que son los ejemplos mal clasificados los que tienen un gran peso en el error.
+
+        Que un ejemplo esté bien clasificado implica que el exponente $y_n w^T x_n$ es positivo, ya que $y_n$ y $w^Tx_n$ tienen el mismo signo. Por tanto, la exponencial es siempre mayor que uno y, a su vez, el denominador será siempre mayor que 2.
+
+        Que un ejemplo esté mal clasificado implica que el exponente $y_n w^T x_n$ es negativo, ya que $y_n$ y $w^Tx_n$ tienen signos contrarios. Como la exponencial de un número negativo es siempre menor que uno, el denominador será siempre menor que 2.
+
+        Hemos visto así que un ejemplo mal clasificado tiene siempre un denominador más pequeño que el de un ejemplo bien clasificado; es decir, el sumando asociado a un ejemplo mal clasificado es mayor que el de un ejemplo bien clasificado, contribuyendo así en mayor medida al gradiente.
+
       \end{solucion}
 
       \begin{ejercicio}
@@ -92,27 +240,72 @@
       \end{ejercicio}
 
       \begin{solucion}
-        asdffg
+        Tras inicializar los pesos $w$ que definen el hiperplano, el algoritmo PLA recorre todas las muestras $(x_n, y_n)$ y, por cada una de las mal clasificadas, ejecuta la siguiente regla de actualización:
+        \[
+        w \gets w + y_nx_n
+        \]
+
+        El algoritmo SGD, por otro lado, ejecuta la siguiente regla de actualización \emph{para todas} las muestras, estén o no mal clasificadas:
+        \[
+        w \gets w - \eta \nabla e_n(w)
+        \]
+        y donde $e_n$ es el error definido en un punto.
+
+        Ahora bien, si tomamos como error el indicado en el enunciado, su gradiente es el siguiente:
+        \begin{align*}
+            \nabla e_n(w) &= \frac{\partial}{\partial w} \max(0,-y_nw^Tx_n) = \max(\frac{\partial}{\partial w}(0), \frac{\partial}{\partial w} (-y_nw^Tx_n)) = \\
+            &= \max(0, -y_n x_n)
+        \end{align*}
+
+        Estudiemos ahora cómo se comporta ese gradiente. Sea $(x_n, y_n)$ una muestra mal etiquetada ---es decir, el signo de $y_n$ y de $x_n$ es distinto---, entonces:
+        \begin{align*}
+            \operatorname{sign}(y_n) \neq \operatorname{sign}(x_n) &\Rightarrow y_n x_n < 0 \Rightarrow - y_n x_n > 0 \Rightarrow  \\
+            &\Rightarrow \nabla e_n(w) = - y_n x_n
+        \end{align*}
+
+        Sea ahora $(x_n, y_n)$ una muestra bien etiquetada ---es decir, el signo de $y_n$ es igual al signo de $x_n$---, luego:
+        \begin{align*}
+            \operatorname{sign}(y_n) = \operatorname{sign}(x_n) &\Rightarrow y_n x_n > 0 \Rightarrow - y_n x_n < 0 \Rightarrow  \\
+            &\Rightarrow \nabla e_n(w) = 0
+        \end{align*}
+
+        Concluimos entonces que la regla de actualización en SGD, con $\eta = 1$, es la siguiente para todas las muestras:
+        \[
+        w \gets w - \begin{cases}
+            0 &\textrm{si la muestra } x_n y_n \textrm{ está bien etiquetada} \\
+            -y_n x_n &\textrm{si la muestra } x_n y_n \textrm{ está mal etiquetada}
+        \end{cases}
+        \]
+
+        Por tanto, la actualización real se hace si y sólo si la muestra está mal etiquetada, y su expresión final es:
+        \[
+        w \gets w + y_nx_n
+        \]
+        es decir, el SGD con $\eta = 1$ y error $e_n(w)=\max(0,-y_nw^Tx_n)$ tiene exactamente el mismo comportamiento que el algoritmo PLA.
       \end{solucion}
 
       \begin{ejercicio}
         El ruido determinista depende de $\mathcal{H}$, ya que algunos modelos aproximan mejor $f$ que otros.
         \begin{enumerate}
             \item Suponer que $\mathcal{H}$ es fija y que incrementamos la complejidad de $f$.
-            \item Suponer que $f$ es fija y decrementamos la complejidad de $\mathcal{H}$
+            \item Suponer que $f$ es fija y decrementamos la complejidad de $\mathcal{H}$.
         \end{enumerate}
         Contestar para ambos escenarios: ¿En general subirá o bajará el ruido determinista? ¿La tendencia a sobrejaustar será mayor o menor? Ayuda: analizar los detalles que influencian el sobreajuste.
       \end{ejercicio}
 
       \begin{solucion}
-        dfasdf
+        El ruido determinista, por definición, es la consecuencia de ajustar funciones objetivo $f$ con funciones de un modelo $\mathcal{H}$ más simple que $f$. La diferencia entre lo que $\mathcal{H}$ intenta ajustar y los datos reales de $f$ tiene al final el mismo comportamiento en el resultado que el ruido estocástico. El primero, sin embargo, no depende de cada toma de datos sino de la función que los genera, luego es constante entre conjuntos de datos extraídos de una misma función.
+
+        Teniendo en cuenta la definición del ruido determinista, es claro que en el primer escenario este subirá. Al tener un modelo fijo de funciones que intentan aproximar una función $f$ cada vez más compleja, la complejidad que el modelo es incapaz de ajustar terminará actuando como ruido. Por tanto, el sobreajuste será mayor: el aumento de ruido, ya sea determinista o estocástico ---el modelo no sabe de qué tipo es el ruido, ni siquiera si lo hay---, siempre influye en el sobreajuste.
+
+
       \end{solucion}
 
 
       \begin{ejercicio}
         La técnica de regularización de Tikhonov es bastante general al usar la condición
         \[
-        wt\Gamma^T\Gamma w \leq C
+        w^T\Gamma^T\Gamma w \leq C
         \]
         que define relaciones entre las $w_i$ ---la matriz $\Gamma_i$ se denomina regularizador de Tikhonov---.
         \begin{enumerate}
@@ -129,10 +322,14 @@
       Considerar la matriz hat $H = X(X^TX)^{-1}X^T$. Sea $X$ una matriz  $N \times (d+1)$ y $X^TX$ invertible. Mostrar que $\operatorname{traza}(H)=d+1$, donde $\operatorname{traza}$ significa la suma de los elementos de la diagonal principal. (+1 punto)
     \end{bonus}
 
-    \nocite{*}
+    \begin{solucion}
+        Sabemos que $\operatorname{traza}(AB) = \operatorname{traza}(BA)$ con $A$ y $B$ matrices cualesquiera. Por tanto:
 
-% -------------------------- Bibliografía ------------------------
-\bibliographystyle{babplain}
-\bibliography{C_01}
+        \begin{align*}
+            \operatorname{traza}(H) &= \operatorname{traza}(\underbrace{X}_\textrm{A}\underbrace{(X^TX)^{-1}X^T}_\textrm{B}) = \\
+            &= \operatorname{traza}(\underbrace{(X^TX)^{-1}X^T}_\textrm{B}\underbrace{X}_\textrm{A}) = \\
+            &= \operatorname{traza}\left(\left((X^TX)^{-1}\right)\left(X^TX\right)\right) = \\ &= traza(I_{d+1}) = d+1
+        \end{align*}
+    \end{solucion}
 
 \end{document}
