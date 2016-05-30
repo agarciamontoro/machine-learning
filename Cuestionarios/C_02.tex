@@ -17,7 +17,7 @@
       \end{ejercicio}
 
       \begin{solucion}
-        ss
+        ---
       \end{solucion}
 
       \begin{ejercicio}
@@ -131,9 +131,66 @@
       \end{ejercicio}
 
       \begin{solucion}
-        Razonemos por reducción al absurdo: supongamos que para todo $w$ existe al menos algún $(x_n, y_n)$ tal que $y_nw^tx_n \leq 0$. Esta es la definición de conjunto no linealmente separable, ya que para cualquier hiperplano hay al menos una muestra mal clasificada. Esto entra en contradicción con la hipótesis de que el conjunto es linealmente separable, luego concluimos que existe un $w$ tal que $y_n w^t x_n < 0 \;\; \forall (x_n,y_n)$.
+        Razonemos por reducción al absurdo: supongamos que para todo $w$ existe al menos algún $(x_n, y_n)$ tal que $y_nw^tx_n \leq 0$. Esta es la definición de conjunto no linealmente separable, ya que para cualquier hiperplano hay al menos una muestra mal clasificada. Esto entra en contradicción con la hipótesis de que el conjunto es linealmente separable, luego concluimos que existe un $w$ tal que $y_n w^T x_n > 0 \;\; \forall (x_n,y_n)$.
 
-        Para formular el problema de optimización lineal, tenemos que tener en cuenta que lo que queremos minimizar ---en el caso de un conjunto linealmente separable queremos que sea nulo--- es el error dentro de la muestra, $E_{in}(w)$
+        Para formular el problema de optimización lineal, tenemos que tener en cuenta que lo que queremos minimizar es el error dentro de la muestra, $E_{in}(w)$. Sin embargo, al suponer un conjunto de datos linealmente separables, sabemos que este error será mínimo ---esto es, nulo--- si y sólo si se clasifican bien todas las muestras; es decir, si y sólo si se cumple la restricción del anterior apartado: $y_n w^T x_n > 0 \;\; \forall (x_n,y_n)$.
+
+        Para formular el problema de programación lineal, por tanto, basta expresar las restricciones en la forma especificada, encontrando una matriz $A$ y un vector $b$ cuya relación $Az \leq b$ ---entendiendo esta desigualdad entre vectores como una desigualdad elemento a elemento--- contenga las restricciones $y_n w^T x_n > 0 \;\; \forall (x_n,y_n)$.
+
+        Una cosa está clara: la variable sobre la que vamos a trabajar es el vector de pesos $w$, así que tomamos $z = w$.
+
+        Analicemos ahora la desigualdad que define la buena clasificación de las muestras. Para acercarnos más a lo que define una restricción de un problema de programación lineal, lo primero que debemos hacer es darle la vuelta a la desigualdad, así que multiplicamos a ambos lados por $-1$ y obtenemos lo siguiente:
+        \[
+        -y_n w^T x_n < 0
+        \]
+
+        Además, queremos que nuestra variable quede a la derecha del todo. Como $w^T x_n = x_n^T w$, podemos escribir la restricción como sigue:
+        \[
+        -y_n x_n^T w < 0
+        \]
+
+        Esta restricción tiene que darse para todas las muestras, así que la matriz $A$ que vamos a construir tendrá en su fila i-ésima el vector resultado del producto $-y_i x_i^T$. La matriz $A$ es entonces la siguiente:
+        \[
+        A = \begin{pmatrix}
+            -y_1 x_1^T \\
+            -y_2 x_2^T \\
+            \cdots \\
+            -y_N x_N^T \\
+        \end{pmatrix}
+        \]
+        que multiplicada por la variable $z = w$ nos produce la siguiente matriz:
+        \[
+        Az = \begin{pmatrix}
+            -y_1 x_1^T \\
+            -y_2 x_2^T \\
+            \cdots \\
+            -y_N x_N^T \\
+        \end{pmatrix}\cdot w = \begin{pmatrix}
+            -y_1 x_1^T w \\
+            -y_2 x_2^T w \\
+            \cdots \\
+            -y_N x_N^T w \\
+        \end{pmatrix}
+        \]
+
+        Como queremos que cada una de las filas sea menor que 0 para que todas las muestras estén bien clasificadas, basta coger como $b$ el vector nulo de dimensión N, con lo que la desigualdad queda como sigue:
+        \[
+        Az < b \iff \begin{pmatrix}
+            -y_1 x_1^T w \\
+            -y_2 x_2^T w \\
+            \cdots \\
+            -y_N x_N^T w \\
+        \end{pmatrix} < \begin{pmatrix}
+            0 \\
+            0 \\
+            \cdots \\
+            0 \\
+        \end{pmatrix}
+        \]
+
+        Por último, faltaría elegir quién es el vector $c$, pero aquí tenemos una ventaja: cumplidas las restricciones, al estar en un conjunto linealmente separable, se alcanza el mínimo de lo que queremos; el error dentro de la muestra se hace nulo. Por tanto, podemos coger $c$ como nos plazca; por ejemplo, tomamos el vector de dimensiones iguales a $w$ y cuyas componentes son todas igual a 1.
+
+        Queda así completamente definido el problema de programación lineal.
       \end{solucion}
 
       \begin{ejercicio}
@@ -323,14 +380,16 @@
       \begin{solucion}
           La primera condición, $\sum_{q=0}^Q w_q^2 \leq C$, puede reescribirse como
           \[
-          $\sum_{q=0}^Q w_q^2 \leq C$
+          w^T I_{Q+1} w \leq C
           \]
 
-          Para que se dé la anterior desigualdad, basta que se cumpla que $\Gamma^T\Gamma = I_{Q+1}$, donde $I_{Q+1}$ es la matriz identidad de dimensión $Q+1$.
+          Para que se dé la anterior desigualdad, basta que se cumpla que
+          \[
+          \Gamma^T\Gamma = I_{Q+1}
+          \]
+          donde $I_{Q+1}$ es la matriz identidad de dimensión $Q+1$.
 
-          Esto se da si y sólo si la matriz $\Gamma$ es una matriz ortogonal.
-
-          La segunda condición
+          Esta igualdad se da si y sólo si la matriz $\Gamma$ es una matriz ortogonal.
 
       \end{solucion}
 
@@ -349,6 +408,7 @@
             &= \operatorname{traza}(\underbrace{(X^TX)^{-1}X^T}_\textrm{B}\underbrace{X}_\textrm{A}) = \\
             &= \operatorname{traza}\left(\left((X^TX)^{-1}\right)\left(X^TX\right)\right) = \\ &= traza(I_{d+1}) = d+1
         \end{align*}
+        donde hemos usado que la traza de la matriz identidad de dimensión $N$ es siempre igual a $N$, ya que es la suma de $N$ unos.
     \end{solucion}
 
 \end{document}
