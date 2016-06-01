@@ -132,7 +132,7 @@ Creamos la variable booleana `mpg01`. En vez de usar los valores simbólicos 1 y
 ```{r}
 # Creamos una nueva variable booleana, mpg01, en función de la mediana,
 # y la añadimos a la base de datos
-mpg01 <- ifelse(mpg > median(mpg), 1, -1)
+mpg01 <- ifelse(mpg > median(mpg), T, F)
 Auto <- data.frame(mpg01, Auto)
 
 # Obtenemos las muestras de entrenamiento y de test
@@ -163,7 +163,7 @@ Esto nos devuelve en la variable `Auto.mod.lin.pred` las probabilidades predecid
 ```{r}
 # Si la predicción tiene probabilidad mayor que el 50%,
 # asignamos el valor Verdad; en otro caso, asignamos el valor Falso
-mod.lin.mpg01 <- ifelse(mod.lin.pred > 0, 1, -1)
+mod.lin.mpg01 <- ifelse(mod.lin.pred > 0.5, T, F)
 ```
 
 Para calcular el error ya basta, tan sólo, contar el porcentaje de puntos mal clasificados en la muestra de test:
@@ -262,20 +262,27 @@ library ( ROCR )
 curveROC <- function (probabilities, labels, model.knn=F, ...) {
   if(model.knn){
     prob <- attributes(probabilities)$"prob"
-    probabilities <- ifelse(probabilities == -1, 1-prob, prob)
+    probabilities <- ifelse(probabilities == F, 1-prob, prob)
   }
   
   prediction <- prediction(probabilities, labels)
+  
+  # Calculamos la curva para las tasas de verdaderos y falsos positivos
   performance <- performance(prediction, "tpr", "fpr")
   plot(performance, ...)
+  
+  # Devolvemos el estimador AUC - el área bajo la curva
+  return(attributes(performance(prediction, "auc"))$"y.values"[[1]])
 }
 
-curveROC(mod.lin.pred, Auto.test$mpg01, col="darkolivegreen", lwd=1.5, main="Curvas ROC")
-curveROC(knn.pred, Auto.test$mpg01, model.knn=T, add=T, col="steelblue", lwd=1.5)
+mod.lin.auc <- curveROC(mod.lin.pred, Auto.test$mpg01, col="darkolivegreen", lwd=1.5, main="Curvas ROC")
+knn.auc <- curveROC(knn.pred, Auto.test$mpg01, model.knn=T, add=T, col="steelblue", lwd=1.5)
 
 legend("bottomright", c("Regresión lineal", "Vecino más cercano"),
        col=c("darkolivegreen", "steelblue"), lwd=1.5)
 ```
+
+A la vista de gráfico no parece muy claro qué modelo tiene un comportamiento más ajustado. Esto lo podemos comprobar observando que el área bajo la curva es mayor en en regresión lineal que en kNN: $AUC_{kNN} = `r I(knn.auc)`$, $AUC_{reg} = `r I(mod.lin.auc)`$. Concluimos así que el ajuste de regresión lineal es algo mejor, aunque no por mucho, que el vecino más cercano.
 
 # Ejercicio 2
 
