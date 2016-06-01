@@ -19,14 +19,6 @@ pausa <- function(){
 }
 ```
 
-Cómo se escribe nua fórmula para que el modelo devuelva los pesos que nos interesan, modelando lo que queremos:
-
-* Modelo general: `m1 <- lm(Y~.,data=datos)`
-* Modelo con columnas especificadas: `m2 <- lm(Y~X1+X2+X3,data=datos)`
-* Modelos más complejos: `m1 <- lm(Y~I(X^2)+X2,data=datos)`
-* Combinaciones polinómicas: `log gpoly()`
-* Para predecir cosas dependientes (p.ej., dos atributos combinados): `lm(Y~X1+X2+X1:X2,data=datos)`, que es equivalente a escribir `lm(Y~X1*X2,data=datos)`.
-
 # Ejercicio 1
 
 Carguemos primero los datos necesarios para realizar el ejercicio y echémosle un primer vistazo a la base de datos:
@@ -274,14 +266,125 @@ curveROC = function (probabilities, labels, model.knn=F, ...) {
   plot(performance, ...)
 }
 
-curveROC(mod.lin.pred, Auto.test$mpg01, col="darkolivegreen", lwd=1.5)
+curveROC(mod.lin.pred, Auto.test$mpg01, col="darkolivegreen", lwd=1.5, main="Curvas ROC")
 curveROC(knn.pred, Auto.test$mpg01, model.knn=T, add=T, col="steelblue", lwd=1.5)
+
+legend("bottomright", c("Regresión lineal", "Vecino más cercano"),
+       col=c("darkolivegreen", "steelblue"), lwd=1.5)
 ```
 
+# Ejercicio 2
 
-<!-- ```{r Estudiamos la BD} -->
-<!-- plot(Auto$weight, Auto$mpg, bg=c("red","green","blue")[unclass(Auto$CLASE)]) -->
-<!-- ``` -->
+Cargamos la librería necesaria y estudiamos un poco la base de datos como hicimos antes:
+
+
+```{r}
+# Cargamos la librería necesaria para usar la base de datos Boston
+# Para usarla, hay que instalar con la orden
+# install.packages('MASS')
+library(MASS)
+
+# Usamos Boston por defecto, evitando así poner el prefijo Boston$
+# siempre que queramos acceder a una característica de esa base de datos
+attach(Boston)
+```
+
+Si ejecutamos las órdenes siguientes
+
+```{r eval=FALSE}
+class(Boston)
+dim(Boston)
+colnames(Boston)
+```
+
+podemos obtener información de la forma que tiene nuestra base de datos. Vemos así que tiene forma de `r class(Boston)`, con `r dim(Boston)[1]` filas y `r dim(Boston)[2]` columnas, cuyos nombres son los siguientes: `r colnames(Boston)`.
+
+```{r}
+# Visualizamos la relación entre todos los pares de variables
+pairs(Boston, pch=20, cex=0.2, col="steelblue")
+```
+
+Podemos estudiar de forma numérica la correlación entre `crim` y las demás variables:
+
+```{r}
+# Tomamos los valores absolutos de la correlación entre crim y todas las demás variables,
+# sin incluirse a sí misma
+corr <- abs(cor(Boston))["crim",-1]
+
+# Visualizamos el grado de correlación en un gráfico de barras.
+# Creamos el gráfico.
+bp <- barplot(corr, axes = FALSE, axisnames = FALSE, col = "steelblue",
+              main="Correlación entre crim y las demás variables")
+
+# Añadimos el texto, girado 45 grados.
+text(bp, par("usr")[3]-0.02, labels = colnames(Boston)[-1],
+     srt = 45, adj = 1, xpd = TRUE)
+
+# Dibujamos los ejes.
+axis(2)
+```
+
+Por último, antes de entrar con el ejercicio en sí, dividimos la muestra en entrenamiento y test como hicimos antes:
+
+```{r}
+# Vector de índices para la muestra de entrenamiento (80%)
+trainIdx  <- sample(nrow(Boston), size=0.8*nrow(Boston))
+
+# Vector de índices para la muestra de test
+testIdx   <- setdiff(1:nrow(Boston), trainIdx)
+
+# Obtenemos las muestras de entrenamiento y de test
+Boston.train <- as.matrix(Boston[trainIdx, ])
+Boston.test  <- as.matrix(Boston[testIdx, ])
+```
+
+## Apartado a
+
+```{r}
+# Cargamos la librería glmnet, que debe ser instalada con la orden
+# install.packages("glmnet")
+library(glmnet)
+
+# Ajustamos un modelo de regresión lineal con regularización y selección de variables.
+# El parámetro alpha=1 es la penalización LASSO
+mod.lasso <- glmnet ( Boston.train[, -1], Boston.train[,"crim"], alpha = 1)
+cvfit = cv.glmnet(Boston.train[, -1], Boston.train[,"crim"])
+```
+
+```{r}
+#LASSO:
+library(glmnet)
+lambda=10^seq(-3, -0.2, by = 0.01)
+
+lasso.mod=glmnet(Boston.train[, -1], Boston.train[,"crim"],alpha=1,lambda=lambda)
+plot(lasso.mod)
+
+set.seed(1)
+cv.out=cv.glmnet(Boston.train[, -1], Boston.train[,"crim"],alpha=1)
+#plot(cv.out)
+bestlam=cv.out$lambda.min
+lasso.pred=predict(lasso.mod,s=bestlam, newx=Boston.test[,-1])
+mean((lasso.pred -Boston.test[,"crim"]))
+bestlam
+```
+
+```{r}
+#Do cross validation to find the minimum lambda (the regularization parameter that minimizes the
+# mean cross validated error)
+lassoreg.cv <- cv.glmnet(Boston.train[, -1], Boston.train[,"crim"])
+lassoreg.cv$lambda.min
+
+#Compute the lasso predictions
+lassopredo <- predict(lassoreg.cv,Boston.test[,-1],s=lassoreg.cv$lambda.min)
+
+#Alternative way to compute predictions
+lassofits<-glmnet(Boston.train[, -1],Boston.train[, "crim"],alpha=1,nlambda=100)
+lassopred<-predict(lassofits,Boston.test[,-1],s=lassoreg.cv$lambda.min)
+
+#Coefficients of the lasso for the min lambda
+lassocoef<-predict(lassofits,s=lassoreg.cv$lambda.min,type="coefficients")
+lassocoef
+```
 
 
 <!-- ```{r Modelos} -->
@@ -332,3 +435,10 @@ curveROC(knn.pred, Auto.test$mpg01, model.knn=T, add=T, col="steelblue", lwd=1.5
 <!-- tune.knn() -->
 <!-- ``` -->
 
+<!-- Cómo se escribe nua fórmula para que el modelo devuelva los pesos que nos interesan, modelando lo que queremos: -->
+
+<!-- * Modelo general: `m1 <- lm(Y~.,data=datos)` -->
+<!-- * Modelo con columnas especificadas: `m2 <- lm(Y~X1+X2+X3,data=datos)` -->
+<!-- * Modelos más complejos: `m1 <- lm(Y~I(X^2)+X2,data=datos)` -->
+<!-- * Combinaciones polinómicas: `log gpoly()` -->
+<!-- * Para predecir cosas dependientes (p.ej., dos atributos combinados): `lm(Y~X1+X2+X1:X2,data=datos)`, que es equivalente a escribir `lm(Y~X1*X2,data=datos)`. -->
