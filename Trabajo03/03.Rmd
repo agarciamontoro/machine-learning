@@ -345,100 +345,156 @@ Boston.test  <- as.matrix(Boston[testIdx, ])
 # install.packages("glmnet")
 library(glmnet)
 
-# Ajustamos un modelo de regresión lineal con regularización y selección de variables.
-# El parámetro alpha=1 es la penalización LASSO
-mod.lasso <- glmnet ( Boston.train[, -1], Boston.train[,"crim"], alpha = 1)
-cvfit = cv.glmnet(Boston.train[, -1], Boston.train[,"crim"])
+# Hacemos validación cruzada para encontrar el mínimo lambda (el parámetro de regularización
+# que minimiza el error medio de validación cruzada). Tomamos alpha = 1 para realizar un método
+# LASSO
+lasso.cv <- cv.glmnet(Boston.train[, -1], Boston.train[,"crim"], alpha = 1)
+lasso.lambda <- lasso.cv$lambda.min
+
+# Calculamos ahora los coeficientes solicitados:
+lasso.coefs <- predict(lasso.cv, Boston.test[,-1], s = lasso.lambda, alpha = 1,
+                      type = "coefficients")
+
+# Eliminamos la primera fila, que contiene el valor de Intercept; en este momento no nos interesa
+lasso.coefs <- lasso.coefs[-1,]
+lasso.umbral <- 0.4
+
+# Función para calcular el error residual estándar (raíz del error cuadrático medio)
+# entre las variables predecidas y las reales
+RSE <- function(pred, real){
+  return(sqrt(mean((pred - real)^2)))
+}
+
+# Hacemos la selección de variables dependiente de un umbral pasado como parámetro
+lasso.seleccionar <- function(lasso.umbral){
+  # Extraemos los nombres de las variables cuyos coeficientes (en valor absoluto)
+  # superan el umbral prefijado
+  lasso.selec <- attributes(lasso.coefs[abs(lasso.coefs) > lasso.umbral])$names
+  
+  # Por último, hacemos las predicciones con las variables seleccionadas
+  lasso.glm <- glmnet(as.matrix(Boston.train[,lasso.selec]), Boston.train[,"crim"], alpha = 1, lambda = lasso.lambda)
+  lasso.pred <- predict(lasso.glm, Boston.test[,lasso.selec], s=lasso.lambda, alpha=1)
+  
+  # Devolvemos el error residual estándar (raíz del error cuadrático medio)
+  #con las variables seleccionadas
+  return(c(lasso.umbral, RSE(lasso.pred, Boston.test[,"crim"])))
+}
+
+# Calculamos los errores para todos los umbrales de 0.1 a 0.7, con saltos de 0.05
+lasso.errores <- t(sapply(seq(0.0,0.7,0.05), lasso.seleccionar))
+
+# Recuperamos el umbral para el que el error calculado es mínimo
+lasso.umbral <- lasso.errores[which.min(lasso.errores[,2]),1]
+
+# Nos quedamos con las mejores variales según el umbral devuelto
+lasso.selec <- attributes(lasso.coefs[abs(lasso.coefs) > lasso.umbral])$names
+```
+
+Las variables seleccionadas por el método LASSO son: `r I(lasso.selec)`.
+
+## Apartado b
+
+```{r}
+# Vamos a encapsular este estudio en una función dependiente del parámetro
+# lambda. Esto nos permitirá después hacer un estudio del underfitting
+weight.decay.rse <- function(param.lambda){
+  # Hacemos la regresión, apuntando que es weight decay con el parámetro alpha = 0
+  ridge <- glmnet(Boston.train[, lasso.selec], Boston.train[,"crim"],
+                  alpha = 0, lambda = param.lambda)
+  
+  # Calculamos las predicciones del modelo ajustado con el lambda calculado anteriormente
+  ridge.pred <- predict(ridge, Boston.test[,lasso.selec], s=param.lambda, alpha=0)
+  
+  # Calculamos el RSE de estas predicciones
+  ridge.rse <- RSE(ridge.pred, Boston.test[,"crim"])
+  
+  return(ridge.rse)
+}
+```
+
+Usando esta función y el parámetro $\lambda = `r I(lasso.lambda)`$ obtenido con el modelo LASSO, La estimación del error residual estándar es de `r I(weight.decay.rse(lasso.lambda))`.
+
+Para comprobar si hay *underfitting* vamos a analizar el modelo de *bias-variance* estudiado en teoría. Vamos a calcular los errores asociados a la regresión usando los valores de $\lambda$ testeados en la validación cruzada que hicimos con LASSO:
+
+```{r}
+# Estudio de underfitting
+ridge.errors <- sapply(lasso.cv$lambda, weight.decay.rse)
+
+# Generación de la gráfica
+plot(lasso.cv$lambda, ridge.errors, pch=20, type="l", cex=0.5, lwd=2, col="steelblue",
+     xlab=expression(Valores~de~lambda), ylab="Error residual", main="Estudio de underfitting")
+points(x=lasso.lambda, y=weight.decay.rse(lasso.lambda), pch=20, col="red")
+legend("bottomright", c("RSE general", expression(RSE~para~lambda[lasso])), col=c("steelblue","red"),
+       pch=c(NA,20), lwd=c(2,NA))
+```
+
+A la vista de este resultado podemos concluir que el comportamiento de los residuos no presenta ningún indicio de *underfitting* con respecto al parámetro $\lambda$. En todo caso podríamos hablar de sobreajuste, ya que el error residual en la muestra de test puede ser mejorado suavizando el modelo; es decir, aumentando el valor del parámetro de regularización.
+
+## Apartado c
+
+```{r}
+# Creamos una nueva variable booleana, crim1, en función de la mediana,
+# y la añadimos a la base de datos
+crim1 <- ifelse(crim > median(crim), 1, -1)
+Boston <- data.frame(crim1, Boston)
+
+# Obtenemos las muestras de entrenamiento y de test
+Boston.train <- Boston[trainIdx,]
+Boston.test  <- Boston[testIdx,]
 ```
 
 ```{r}
-#LASSO:
-library(glmnet)
-lambda=10^seq(-3, -0.2, by = 0.01)
+svm.error <- function(kernel.name){
+  # Vector de índices para la muestra de entrenamiento (80%)
+  trainIdx  <- sample(nrow(Boston), size=0.8*nrow(Boston))
+  # Vector de índices para la muestra de test
+  testIdx   <- setdiff(1:nrow(Boston), trainIdx)
+  
+  # Obtenemos las muestras de entrenamiento y de test
+  Boston.train <- Boston[trainIdx,]
+  Boston.test  <- Boston[testIdx,]
 
-lasso.mod=glmnet(Boston.train[, -1], Boston.train[,"crim"],alpha=1,lambda=lambda)
-plot(lasso.mod)
+  # Ajustamos el modelo
+  svm <- svm(crim1~., data = Boston.train, kernel = kernel.name)
+  
+  # Hacemos la predicción
+  svm.pred <- predict(svm, Boston.test, type = "response")
+  
+  # Calculamos la variable según las predicciones
+  pred <- ifelse(svm.pred > 0, 1, -1)
+  
+  # Devolvemos el porcentaje de muestras mal clasificadas
+  return(mean(pred != Boston.test[,"crim1"]))
+}
 
-set.seed(1)
-cv.out=cv.glmnet(Boston.train[, -1], Boston.train[,"crim"],alpha=1)
-#plot(cv.out)
-bestlam=cv.out$lambda.min
-lasso.pred=predict(lasso.mod,s=bestlam, newx=Boston.test[,-1])
-mean((lasso.pred -Boston.test[,"crim"]))
-bestlam
+svm.linear <- mean(replicate(100,svm.error("linear")))
+svm.polynomial <- mean(replicate(100,svm.error("polynomial")))
+svm.radial <- mean(replicate(100,svm.error("radial")))
+svm.sigmoid <- mean(replicate(100,svm.error("sigmoid")))
 ```
 
-```{r}
-#Do cross validation to find the minimum lambda (the regularization parameter that minimizes the
-# mean cross validated error)
-lassoreg.cv <- cv.glmnet(Boston.train[, -1], Boston.train[,"crim"])
-lassoreg.cv$lambda.min
+Los errores obtenidos son los siguientes:
 
-#Compute the lasso predictions
-lassopredo <- predict(lassoreg.cv,Boston.test[,-1],s=lassoreg.cv$lambda.min)
-
-#Alternative way to compute predictions
-lassofits<-glmnet(Boston.train[, -1],Boston.train[, "crim"],alpha=1,nlambda=100)
-lassopred<-predict(lassofits,Boston.test[,-1],s=lassoreg.cv$lambda.min)
-
-#Coefficients of the lasso for the min lambda
-lassocoef<-predict(lassofits,s=lassoreg.cv$lambda.min,type="coefficients")
-lassocoef
-```
+* Núcleo lineal: `r I(100*svm.linear)`%
+* Núcleo polinómico: `r I(100*svm.polynomial)`%
+* Núcleo de base radial: `r I(100*svm.radial)`%
+* Núcleo sigmoidal: `r I(100*svm.sigmoid)`%
 
 
-<!-- ```{r Modelos} -->
-<!-- modelo <- lm(Auto$mpg ~ Auto$weight, data=Auto) -->
-<!-- plot(Auto$weight, Auto$mpg, pch=20) -->
-<!-- abline(modelo$coefficients) -->
-
-<!-- summary(modelo) -->
-<!-- ``` -->
-
-<!-- ```{r Qué se puede hacer con un modelo} -->
-<!-- names(modelo) -->
-<!-- methods(class=class(modelo)) -->
-<!-- coefficients(modelo) -->
-<!-- predict(modelo) -->
-<!-- ``` -->
-
-<!-- ```{r Otro modelo} -->
-<!-- modelo2 <- lm(Auto$mpg ~ Auto$weight + Auto$displacement + Auto$horsepower, data=Auto) -->
-
-<!-- summary(modelo2) -->
-<!-- plot(modelo2) -->
-<!-- ``` -->
-
-<!-- ```{r Train-test} -->
-<!-- train <- sample(1:nrow(Auto), 100) -->
-<!-- test <- Auto[-train,] -->
-<!-- ``` -->
-
-<!-- *Apartado 1.d* -->
 
 
-<!-- ```{r Prediccion modelos} -->
-<!-- # Sin decirle nada estmaos usando de nuevo el conjunto de train -->
-<!-- probabilidades <- predict(modelo) -->
-
-<!-- # Para usar el test -->
-<!-- probabilidades <- predict(modelo, newdata = train) -->
-
-<!-- # Deberíamos poner un ifelse para que si la prob. está por -->
-<!-- # debajo de 0.5, se ponga mpg01 a -1; en otro caso, a 1 -->
-<!-- ``` -->
 
 
-<!-- ```{r Tunear el knn} -->
-<!-- # Ver http://rstudio-pubs-static.s3.amazonaws.com/16251_6766538f503d45039570e62d94dff635.html -->
-<!-- library(e1071) -->
-<!-- tune.knn() -->
-<!-- ``` -->
 
-<!-- Cómo se escribe nua fórmula para que el modelo devuelva los pesos que nos interesan, modelando lo que queremos: -->
 
-<!-- * Modelo general: `m1 <- lm(Y~.,data=datos)` -->
-<!-- * Modelo con columnas especificadas: `m2 <- lm(Y~X1+X2+X3,data=datos)` -->
-<!-- * Modelos más complejos: `m1 <- lm(Y~I(X^2)+X2,data=datos)` -->
-<!-- * Combinaciones polinómicas: `log gpoly()` -->
-<!-- * Para predecir cosas dependientes (p.ej., dos atributos combinados): `lm(Y~X1+X2+X1:X2,data=datos)`, que es equivalente a escribir `lm(Y~X1*X2,data=datos)`. -->
+
+
+
+
+
+
+
+
+
+
+
