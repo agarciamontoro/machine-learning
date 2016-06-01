@@ -132,7 +132,7 @@ Creamos la variable booleana `mpg01`. En vez de usar los valores simbólicos 1 y
 ```{r}
 # Creamos una nueva variable booleana, mpg01, en función de la mediana,
 # y la añadimos a la base de datos
-mpg01 <- ifelse(mpg > median(mpg), T, F)
+mpg01 <- ifelse(mpg > median(mpg), 1, -1)
 Auto <- data.frame(mpg01, Auto)
 
 # Obtenemos las muestras de entrenamiento y de test
@@ -163,7 +163,7 @@ Esto nos devuelve en la variable `Auto.mod.lin.pred` las probabilidades predecid
 ```{r}
 # Si la predicción tiene probabilidad mayor que el 50%,
 # asignamos el valor Verdad; en otro caso, asignamos el valor Falso
-mod.lin.mpg01 <- ifelse(mod.lin.pred > 0.5, T, F)
+mod.lin.mpg01 <- ifelse(mod.lin.pred > 0, 1, -1)
 ```
 
 Para calcular el error ya basta, tan sólo, contar el porcentaje de puntos mal clasificados en la muestra de test:
@@ -213,7 +213,7 @@ La forma más sencilla de ajustar el modelo y predecir con él es llamar a la fu
 library(class)
 
 # Predecimos de la forma más directa posible y con el típico valor de k=3
-knn.pred <- knn(norm.train, norm.test, Auto.train$mpg01, k=3)
+knn.pred <- knn(norm.train, norm.test, as.factor(Auto.train$mpg01), k=3, prob=T)
 
 # Calculamos el error
 knn.error <- mean(Auto.test$mpg01 != knn.pred)
@@ -228,7 +228,7 @@ library(e1071)
 
 # Para la validación cruzada usamos el conjunto completo de datos
 # y el conjunto completo de clases
-knn.cross <- tune.knn(x = norm.full, y = Auto$mpg01, k = 1:20,
+knn.cross <- tune.knn(x = norm.full, y = as.factor(Auto$mpg01), k = 1:20,
                       tunecontrol = tune.control(sampling = "cross"), cross=10)
 
 # Podemos estudiar visualmente la búsqueda del mejor k:
@@ -242,10 +242,14 @@ Ajustamos de nuevo el modelo con el valor de $k = `r I(knn.k)`$ obtenido del ant
 
 ```{r}
 # Predecimos con el k calculado
-knn.pred <- knn(norm.train, norm.test, Auto.train$mpg01, k = knn.k, prob = T)
+knn.pred <- knn(norm.train, norm.test, as.factor(Auto.train$mpg01), k = knn.k, prob = T)
 
 # Calculamos de nuevo el error
 knn.k.error <- mean(Auto.test$mpg01 != knn.pred)
+
+# Vemos una tabla que resume los resultados
+tab <- table(Real=Auto.test$mpg01, Predecido=knn.pred)
+kable(tab, caption="kNN")
 ```
 
 consiguiendo ahora un `r I(100*knn.k.error)`% de error, `r I(100*(knn.error - knn.k.error))` puntos mejor que el anterior.
@@ -254,15 +258,15 @@ consiguiendo ahora un `r I(100*knn.k.error)`% de error, `r I(100*(knn.error - kn
 ```{r}
 # install.packages("ROCR")
 library ( ROCR )
-curveROC = function (probabilities, labels, model.knn=F, ...) {
+
+curveROC <- function (probabilities, labels, model.knn=F, ...) {
   if(model.knn){
     prob <- attributes(probabilities)$"prob"
-    probabilities <- ifelse(probabilities == 0, 1-prob, prob)
+    probabilities <- ifelse(probabilities == -1, 1-prob, prob)
   }
   
-  prediction = prediction(probabilities, labels)
-  performance = performance(prediction, "tpr", "fpr")
-  print(performance)
+  prediction <- prediction(probabilities, labels)
+  performance <- performance(prediction, "tpr", "fpr")
   plot(performance, ...)
 }
 
