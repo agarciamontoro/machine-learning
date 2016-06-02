@@ -478,27 +478,346 @@ svm.error <- function(kernel.name){
   return(mean(pred != Boston.test[,"crim1"]))
 }
 
+# Ajustamos un modelo de SVM con un núcleo lineal
 svm.linear <- mean(replicate(100,svm.error("linear")))
+```
+
+Tras repetir el experimento 100 veces con particiones aleatorias de entrenamiento y test, vemos que el SVM con núcleo lineal devuelve un error de $E_{test} = `r I(100*svm.linear)`$%. A la vista de un error tan alto, vamos a ajustar el modelo con otros núcleos, estudiando cuál es el mejor.
+
+```{r}
+# Ajustamos SVM con los núcleos disponibles
 svm.polynomial <- mean(replicate(100,svm.error("polynomial")))
 svm.radial <- mean(replicate(100,svm.error("radial")))
 svm.sigmoid <- mean(replicate(100,svm.error("sigmoid")))
 ```
 
-Los errores obtenidos son los siguientes:
+Los errores, obtenidos con la misma técnica de repetir 100 veces las particiones y calcular el porcentaje de muestras mal clasificadas, son los siguientes:
 
 * Núcleo lineal: `r I(100*svm.linear)`%
 * Núcleo polinómico: `r I(100*svm.polynomial)`%
 * Núcleo de base radial: `r I(100*svm.radial)`%
 * Núcleo sigmoidal: `r I(100*svm.sigmoid)`%
 
+Podemos concluir por tanto que el mejor modelo de entre los SVM analizados es aquel que usa el núcleo de base radial, consiguiendo una tasa de error de sólo el `r I(100*svm.radial)`%.
+
+# Ejercicio 3
+
+## Apartado 1
+
+Cargamos las librerías necesarias y dividimos, como ,antes la base de datos en conjuntos de entrenamiento y test:
+
+```{r}
+# Cargamos las librerías randomForest y gbm, que se pueden instalar con las órdenes
+# install.packages(c("randomForest","gbm"))
+library(randomForest)
+library(gbm)
+
+# Devolvemos la base de datos a su estado original
+Boston <- Boston[, !(names(Boston) %in% "crim1")]
+
+# Vector de índices para la muestra de entrenamiento (80%)
+trainIdx  <- sample(nrow(Boston), size=0.8*nrow(Boston))
+
+# Vector de índices para la muestra de test
+testIdx   <- setdiff(1:nrow(Boston), trainIdx)
+
+# Obtenemos las muestras de entrenamiento y de test
+Boston.train <- Boston[trainIdx, ]
+Boston.test  <- Boston[testIdx, ]
+```
+
+## Apartado 2
+Sabemos que *bagging* no es más que un caso particular de *random forest* con los parámetros $m = p$; es decir, el número de variables usadas es el número total de variables disponibles.
+
+```{r}
+# Ajustamos bagging
+bag <- randomForest(medv ~ ., data = Boston, subset = trainIdx, mtry = ncol(Boston)-1, importance = T)
+```
+
+El significado de cada parámetro usado en la llamada a `randomForest` es el siguiente:
+
+* `medv ~ .` Fórmula en la que indicamos que `medv` es la variable predecir y todas las demás (`.`) se usen como predictoras
+* `data = Boston` Conjunto completo de datos, con todas las variables (incluso la que se quiere predecir, ya que `randomForest` ya lo tendrá en cuenta) y ambos subconjuntos: los de entrenamiento y los de test.
+* `subset = trainIdx` Vector de índices que indican qué filas del parámetro `data` son las correspondientes al subconjunto de entrenamiento.
+* `mtry = ncol(Boston)-1` Número de variables usadas en el cómputo. Para poder hacer bagging, tenemos que indicar que se usen todas las variables disponibles; es decir, el número de columnas menos uno: todas las variables menos la que se quiere predecir.
+* `importance = TRUE` Parámetro de configuración para indicar que se evalúe la importancia de los predictores.
+
+Podemos ya usar el modelo para predecir la variable `medv` y calcular así el error cuadrático medio con respecto a los valores reales:
+
+```{r}
+# Predecimos la variable medv con el modelo ajustado
+bag.pred <- predict(bag, Boston.test)
+
+# Calculamos el error cuadrático medio
+bag.error <- mean((bag.pred - Boston.test[,"medv"])^2)
+```
+
+Este modelo nos da un error de `r I(bag.error)`.
+
+## Apartado 3
+
+Vamos a ajustar el modelo con los parámetros por defecto y estudiar su comportamiento:
+
+```{r}
+# Ajustamos randomForest con el valor por defecto de número árboles: 500
+forest.500 <- randomForest(medv ~ ., data = Boston, subset = trainIdx, ntrees=500, importance = T)
+
+# Generamos el gráfico del error producido con cada valor de ntrees de 1a 500
+plot(forest.500, col="steelblue", lwd=2)
+```
+
+En la gráfica anterior se puede observar cómo el error se estabiliza a partir de 50 o 60 árboles. Los datos referentes a esta gráfica se encuentran en el componente `mse` de la lista devuelta por `randomForest`, así que podemos buscar directamente cuál es el valor de `ntrees` para el que se alcanza el mínimo error cuadrático medio:
+
+```{r}
+# Tomamos el valor de ntrees en el que se minimiza el error
+forest.best.N <- which(forest.500$mse == min(forest.500$mse))
+
+# Reajustamos el modelo con este valor como ntrees
+forest.best <- randomForest(medv ~ ., data = Boston, subset = trainIdx, ntrees=forest.best.N, importance = T)
+```
+
+Analicemos ahora si este procedimiento ha mejorado el error anterior. Calculemos entonces el error cuadrático medio para el ajuste por defecto y para este último, en el que hemos optimizado el número de árboles:
+
+```{r}
+# Calculamos las predicciones con ambos modelos
+forest.500.pred <- predict(forest.500, Boston.test)
+forest.best.pred <- predict(forest.best, Boston.test)
+
+# Calculamos el error cuadrático medio con respecto a los valores reales
+forest.500.err <- mean((forest.500.pred - Boston.test[,"medv"])^2)
+forest.best.err <- mean((forest.best.pred - Boston.test[,"medv"])^2)
+```
 
 
+```{r}
+# Calcula el error cuadrático medio de randomForest, con el parámetro
+# ntrees especificado, con 10 particiones aleatorias
+errorNtree <- function(param.ntrees){
+  
+  # Calcula el error cuadrático medio en una partición 80-20 aleatoria
+  forest.fold <- function(){
+    # Vector de índices para la muestra de entrenamiento (80%)
+    trainIdx  <- sample(nrow(Boston), size=0.8*nrow(Boston))
+    
+    # Vector de índices para la muestra de test
+    testIdx   <- setdiff(1:nrow(Boston), trainIdx)
+    
+    # Obtenemos las muestras de entrenamiento y de test
+    Boston.train <- Boston[trainIdx, ]
+    Boston.test  <- Boston[testIdx, ]
+    
+    forest <- randomForest(medv ~ ., data = Boston, subset = trainIdx,
+                           ntrees=param.ntrees, importance = T)
+    
+    pred <- predict(forest, Boston.test)
+    
+    return(mean((pred - Boston.test[,"medv"])^2))
+  }
+  
+  # Calcula el error medio en 10 particiones aleatorias
+  error <- mean(replicate(10, forest.fold()))
+  
+  return(c(param.ntrees,error))
+}
+
+# Calculamos los errores para ntrees igual a 30, 50, 70, 90, ..., 350
+errores <- t(sapply(seq(30, 350, 20), errorNtree))
+
+# Obtenemos el ntree tal que minimiza los errores obtenidos
+best.ntree <- errores[which(errores[,2] == min(errores[,2])), 1]
+
+# Reajustamos, recalculamos predicciones y vemos el error cuadrático
+forest.cv <- randomForest(medv ~ ., data = Boston, subset = trainIdx,
+                          ntrees=best.ntree, importance = T)
+forest.cv.pred <- predict(forest.cv, Boston.test)
+forest.cv.err <- mean((forest.cv.pred - Boston.test[,"medv"])^2)
+```
+
+Tenemos por tanto los siguientes errores:
+
+* Valor por defecto: $ntrees = 500 \rightarrow E_{test} = `r I(forest.500.err)`$
+* Valor que minimiza los `mse` devueltos por el modelo: $ntrees = `r I(forest.best.N)` \rightarrow E_{test} = `r I(forest.best.err)`$
+* Valor encontrado con validación cruzada: $ntrees = `r I(best.ntree)` \rightarrow E_{test} = `r I(forest.cv.err)`$
+
+Es claro entonces que en el caso de la minimización de los `mse` hemos caído en el sobreajuste, ya que el valor del error en la muestra de test aumenta. En el último caso, calculado con validación cruzada, hemos tenido en cuenta varias particiones y hemos conseguido un error ligeramente menor, aunque esencialmente igual. 
+
+Sería sensato quedarse con este último valor, que teóricamente tiene un poder de generalización mayor, que el tomado por defecto. Sin embargo, y aunque el razonamiento seguido es correcto, no encontramos en este estudio, con estos datos concretos, conclusiones fuertes que respalden con contundencia la elección de `ntrees = ``r I(best.ntree)`.
 
 
+## Apartado 4
 
+Ajustamos el modelo de boosting con la función `gbm` y los parámetros usuales:
 
+```{r}
+boost <- gbm(medv ~ ., data = as.data.frame(Boston.train),
+             distribution = "gaussian" , n.trees=5000, interaction.depth=4)
 
+# Resumimos la información devuelta por el modelo y
+# generamos un gráfico de la influencia de cada variable
+summary(boost)
+```
 
+Podemos usar ahora el modelo para predecir la variable `medv`:
+
+```{r}
+boost.pred <- predict(boost, Boston.test, n.trees=5000)
+boost.err <- mean((boost.pred - Boston.test[,"medv"])^2)
+```
+
+El error de boosting con los parámetros fijados es mayor que el conseguido hasta ahora con *bagging* y *random forest*. Podemos intentar mejorar este error ajustando los parámetros con validación cruzada:
+
+```{r}
+# Reajustamos con 5cv
+boost.cv <- gbm(medv ~ ., data = as.data.frame(Boston.train), cv.folds=5,
+                distribution = "gaussian" , n.trees=5000, interaction.depth=4)
+
+# Buscamos el valor de n.trees óptimo con validación cruzada
+boost.cv.n <- gbm.perf(boost.cv,method="cv")
+
+# Hacemos las predicciones con este valor
+boost.cv.pred <- predict(boost.cv, Boston.test, n.trees=boost.cv.n)
+boost.cv.err <- mean((boost.cv.pred - Boston.test[,"medv"])^2)
+```
+
+De nuevo, la validación cruzada nos da un error igual o peor al anterior. Mientras que el error de boosting sin optimizar era de `r I(boost.err)`, el optimizado mediante validación cruzada es de `r I(boost.cv.err)`. Esta diferencia es tan pequeña que no aporta nada sobre el modelo por defecto, así que sería sensato quedarse con el primero, que es menos costoso computacionalmente que el optimizado.
+
+Haciendo un análisis global, y si queremos elegir entre *bagging*, *random forest* y *boosting*, lo más inteligente en este caso sería usar *random forest* con validación cruzada para asegurar un error menor y un poder de generalización mayor.
+
+# Ejercicio 4
+
+Generamos las muestras de entrenamiento y test, anclamos la base de datos OJ al espacio de nombres para evitar escribir siempre el prefijo y cargamos la librería tree:
+
+```{r}
+# Vector de índices para la muestra de entrenamiento (80%)
+trainIdx  <- sample(nrow(OJ), size=800)
+
+# Vector de índices para la muestra de test
+testIdx   <- setdiff(1:nrow(OJ), trainIdx)
+
+# Obtenemos las muestras de entrenamiento y de test
+OJ.train <- OJ[trainIdx, ]
+OJ.test  <- OJ[testIdx, ]
+
+attach(OJ)
+
+# Incluimos la librería tree, que se puede instalar con la orden
+# install.packages("tree")
+library(tree)
+```
+
+Ajustamos ahora un modelo de árbol con la función `tree`, que sigue la misma sintaxis que los modelos usados hasta ahora:
+
+```{r}
+arbol <- tree(Purchase ~ ., OJ.train)
+```
+
+## Apartado 2
+
+Estudiamos ahora los resultados obtenidos con la órden `summary`:
+
+```{r}
+# Generamos un resumen del modelo obtenido
+summary(arbol)
+```
+
+Observamos que el modelo tiene una tasa de error de entrenamiento del `r I(summary(arbol)$misclass[1] / summary(arbol)$misclass[2] * 100)`%, bastante pobre.
+
+El número de nodos terminales es de `r I(summary(arbol)$size)`, aunque el número de variables usadas es únicamente `r I(length(attributes(factor(summary(arbol)$used))$levels))`, que son las siguientes: `r I(attributes(factor(summary(arbol)$used))$levels)`.
+
+Con un error tan alto ya podemos intuir que este árbol no es el óptimo. Aunque es muy compacto, su poder de predicción es pobre, quizás por el bajo número de variables usadas.
+
+Vemos por último que el modelo tiene una varianza residual media de `r I(summary(arbol)$dev/summary(arbol)$df)`.
+
+## Apartado 3
+
+Si dibujamos el árbol con sus etiquetas
+
+```{r}
+# Generación del gráfico del árbol
+plot(arbol)
+
+#Le añadimos los nombres de las variables y los umbrales
+text(arbol, pretty=0)
+```
+
+vemos que este árbol, aunque compacto, no es nada bueno. Lo primero que veoms es que toda la rama izquierda tiene la misma clase `MM`, así que podríamos ahorrarnos hasta tres subramas asignando a ese subárbol un nodo terminal que fuera `MM`. A la derecha se ve rápido que si lo primero que estudiáramos fuera la variable `ListPriceDiff` los cómputos serían más rápidos, ya que sólo de él depende que sea `MM` y no `CH`. Este árbol, en definitiva, no es en absoluto un buen resultado.
+
+## Apartado 4
+
+```{r}
+# Cargamos la librería caret para poder generar la matriz de confusión.
+# Se puede instalar con la orden
+# install.packages("caret")
+library(caret)
+
+# Predecimos y calculamos la matriz de confusión
+arbol.pred <- predict(arbol, OJ.test, type="class")
+arbol.conf <- confusionMatrix(arbol.pred, OJ.test[,"Purchase"])
+
+# Visualizamos la matriz de confusión
+arbol.conf
+```
+
+En la matriz de confusión lo primero que vemos es una tabla resumiendo los falsos positivos y los falsos negativos. Como vemos, es mucho más frecuente el error de clasificar las muestras `CH` como `MM`; esto no debe sorprendernos, ya que la gran mayoría de nodos terminales en el árbol tienen la última clase.
+
+Después tenemos información estadística de la precisión del test, que vemos que es del `r I(arbol.conf$overall["Accuracy"] * 100)`. Por lo tanto, concluimos que la tasa de error del test es de un `r I((1-arbol.conf$overall["Accuracy"]) * 100)`%.
+
+La matriz de confusión, por último, nos da diversos estimadores como la especificidad o los porcentajes de positivos y negativos predecidos (donde la variable positiva es, como se indica al final, `CH`).
+
+## Apartado 5
+
+Podemos optimizar el tamaño óptimo del árbol buscando los parámetros que hacen de la complejidad del árbol resultante la óptima. Esta búsqueda la vamos a hacer con `cv.tree`, una función que hace validación cruzada sobre el número de particiones indicadas y que mide el número de muestras mal clasificadas según el parámetro buscado. Vamos a tomar, como es usual, 5 particiones.
+
+Además, vamos a usar el argumento `FUN = prune.misclass` para indicar que queremos que sea la tasa de error de clasificación la que guíe la validación cruzada y la poda.
+
+```{r}
+# Hacemos validación cruzada
+arbol.cv <- cv.tree(arbol, K = 5, FUN=prune.misclass)
+```
+
+Como vemos, el mejor tamaño para este árbol es de `r I(arbol.cv$size[which(arbol.cv$dev == min(arbol.cv$dev))])`
+
+## Bonus - 4
+
+Podemos ahora ver dos gráficos: el tamaño del árbol contra el error de validación cruzada y el parámetro $k$ contra ese mismo error:
+
+```{r}
+# Estudiamos el número de muestras mal clasificadas por cada tamaño de árbol considerado
+# y por cada parámetro k
+par(mfrow = c(1,2))
+plot(arbol.cv$size, arbol.cv$dev, type ="b", pch=20, col="steelblue", lwd=2,
+     xlab="Tamaño del árbol", ylab="Muestras mal clasificadas")
+plot(arbol.cv$k, arbol.cv$dev, type ="b", pch=20, col="steelblue", lwd=2,
+     xlab="Parámetro k", ylab="")
+par(mfrow=c(1,1))
+```
+
+Una vez calculado y visualizado el tamaño óptimo de árbol, podemos mejorar con él el modelo presente:
+
+```{r}
+# Tomamos el mejor valor de tamaño
+arbol.n <- arbol.cv$size[which(arbol.cv$dev == min(arbol.cv$dev))]
+
+# Podamos el árbol
+arbol.podado = prune.misclass(arbol, best=arbol.n)
+
+# Dibujamos de nuevo el árbol
+plot(arbol.podado)
+text(arbol.podado, pretty=0)
+```
+
+Este árbol es mucho más compacto, pero veamos qué error de clasificación tiene en la muestra de test:
+
+```{r}
+# Predecimos y calculamos matriz de confusión
+arbol.podado.pred <- predict(arbol.podado, OJ.test, type="class")
+arbol.podado.conf <- confusionMatrix(arbol.podado.pred, OJ.test[,"Purchase"])
+
+# Estudiamos matriz de confusión
+arbol.podado.conf
+```
+
+La tasa de error es ahora de `r I((1-arbol.podado.conf$overall["Accuracy"]) * 100)`%, algo mejor que anteriormente. Aunque esta mejora no es muy importante, hay que notar que ahora el árbol es más compacto, legible y eficiente, así que hemos ganado tanto en eficiencia como en efectividad. En este caso la validación cruzada ha merecido la pena.
 
 
 
