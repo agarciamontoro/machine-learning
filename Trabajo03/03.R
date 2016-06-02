@@ -1,6 +1,8 @@
 ## ----setup, include=FALSE------------------------------------------------
 rm(list=ls())
 library(knitr)
+# Definimos la pantalla como salida principal de los gráficos
+X11()
 knitr::opts_chunk$set(echo = TRUE, warning = FALSE)
 set.seed(1992121)
 
