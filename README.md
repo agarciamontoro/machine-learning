@@ -4,7 +4,7 @@ Exercises -both theoretical and practical- on machine learning for the course *A
 
 <p align="center">
 <img src="https://cloud.githubusercontent.com/assets/3924815/15762046/e0616022-291b-11e6-8974-21a203dbd39c.png" width="32%" alt="Screenshot"/> <img src="https://cloud.githubusercontent.com/assets/3924815/15762048/e272f4fc-291b-11e6-9433-7f5e2ef558c0.png" width="32%" alt="Screenshot"/> <img src="https://cloud.githubusercontent.com/assets/3924815/15762047/e170b332-291b-11e6-91d7-6dfcd020cecb.png" width="32%" alt="Screenshot"/>
-Kind of stuff you will find in this repo :)
+The kind of stuff you will find in this repo :)
 </p>
 
 ## Assignment 01
